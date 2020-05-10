@@ -1,2 +1,2 @@
 # swing_trading
-Swing Trading - Teste GIT
+Swing Trading - Teste GIT (Branch)
