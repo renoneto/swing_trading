@@ -1,2 +1,14 @@
 .ipynb_checkpoints/
 .DS_Store
+.vscode/settings.json
+tools/__pycache__/finviz_extract.cpython-37.pyc
+tools/extract/__pycache__/finviz_extract.cpython-37.pyc
+tools/indicators/__pycache__/run_indicators.cpython-37.pyc
+tools/__pycache__/chunks.cpython-37.pyc
+tools/signals/__pycache__/create_signals.cpython-37.pyc
+tools/extract/__pycache__/price_extract.cpython-37.pyc
+tools/indicators/__pycache__/indicators.cpython-37.pyc
+tools/__pycache__/run_all.cpython-37.pyc
+output/all_indicators.feather
+docs/prices.csv
+output/trades.csv
