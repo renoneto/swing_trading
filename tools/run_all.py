@@ -3,21 +3,27 @@ import time
 from os import path
 
 from extract.price_extract import main_prices
+from extract.pe_ratio import main_pe
 from indicators.indicators import main_indicators
 from signals.create_signals import main_signals
 
 def main(full_refresh=False,
         number_of_signals=5,
         skip_price=False,
-        skip_indicators=False):
+        skip_indicators=False,
+        stocks_path='../docs/my_stocks.csv'):
 
     # Start Tracking Time
     start = time.time()
 
+    """
+    UPDATE PRICES
+    """
+
     if skip_price == False:
 
         # Extract Prices using stocks in csv file
-        all_prices, my_stocks_symbols = main_prices(full_refresh=full_refresh, do_not_refresh=False)
+        all_prices, my_stocks_symbols = main_prices(full_refresh=full_refresh, do_not_refresh=False, stocks_path=stocks_path)
 
     else:
 
@@ -40,9 +46,28 @@ def main(full_refresh=False,
     # Start Tracking Time 2
     start2 = time.time()
 
+    """
+    PE RATIO
+    """
+    if full_refresh == False:
+        pe_and_prices = main_pe(full_refresh=False)
+    else:
+        pe_and_prices = main_pe(full_refresh=True)
+
+    # End Timer
+    end = time.time()
+    print('It took ' + str(int(end - start)) + ' seconds to create PE Ratios.')
+
+    # Start Tracking Time 2
+    start2 = time.time()
+
+    """
+    RUN INDICATORS
+    """
+
     if skip_indicators == False:
         # Create all indicators
-        indicators = main_indicators(all_prices, my_stocks_symbols, full_refresh=True)
+        indicators = main_indicators(pe_and_prices, my_stocks_symbols, full_refresh=True)
     else:
 
         # Check if file exists
@@ -57,7 +82,7 @@ def main(full_refresh=False,
         else:
             print('Cannot skip indicators because file doesnt exist. Running Full Refresh.')
             # Create all indicators
-            indicators = main_indicators(all_prices, my_stocks_symbols, full_refresh=True)
+            indicators = main_indicators(pe_and_prices, my_stocks_symbols, full_refresh=True)
 
     # End Timer
     end = time.time()
@@ -65,6 +90,10 @@ def main(full_refresh=False,
 
     # Start Tracking Time 2
     start2 = time.time()
+
+    """
+    CREATE BUY/SELL SIGNALS
+    """
 
     # Create Trades/Buy and Sell Signals
     trades = main_signals(indicators, number_of_signals=number_of_signals)
