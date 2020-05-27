@@ -1,0 +1,302 @@
+symbol,description,industry
+JCP,"J. C. Penney Company, Inc.",Consumer Cyclical
+BVSN,"BroadVision, Inc.",Technology
+CCXX,Churchill Capital Corp III,Financial
+SPAQ,Spartan Energy Acquisition Corp.,Financial
+FLCB,Franklin Liberty US Core Bond ETF,Financial
+CCH,Collier Creek Holdings,Financial
+CPAH,CounterPath Corporation,Technology
+PDN,Invesco FTSE RAFI Developed Markets ex-U.S. Small-Mid ETF,Financial
+TCRD,"THL Credit, Inc.",Financial
+FLQL,Franklin LibertyQ U.S. Equity ETF,Financial
+I,Intelsat S.A.,Communication Services
+PACQ,Pure Acquisition Corp.,Financial
+GFLU,GFL Environmental Inc.,Industrials
+PAPR,Innovator S&P 500 Power Buffer ETF - April New,Financial
+SIF,"SIFCO Industries, Inc.",Industrials
+BBRE,JPMorgan BetaBuilders MSCI U.S. REIT ETF,Financial
+AGNCP,AGNC Investment Corp.,Real Estate
+DFEB,FT Cboe Vest US Eq Deep Buffer ETF - February,Financial
+FEAC,Flying Eagle Acquisition Corp.,Financial
+LITB,"LightInTheBox Holding Co., Ltd.",Consumer Cyclical
+YTEN,"Yield10 Bioscience, Inc.",Basic Materials
+ITM,VanEck Vectors AMT-Free Intermediate Municipal Index ETF,Financial
+ERUS,iShares MSCI Russia Capped ETF,Financial
+TPYP,Tortoise North American Pipeline Fund,Financial
+ASTC,Astrotech Corporation,Industrials
+XRF,China Rapid Finance Limited,Financial
+MITO,Stealth BioTherapeutics Corp,Healthcare
+MDIV,First Trust Multi-Asset Diversified Income Index Fund,Financial
+MNA,IQ Merger Arbitrage ETF,Financial
+MIE,"Cohen & Steers MLP Income and Energy Opportunity Fund, Inc.",Financial
+PRFZ,Invesco FTSE RAFI US 1500 Small-Mid ETF,Financial
+AVCT,"American Virtual Cloud Technologies, Inc.",Financial
+VTWO,Vanguard Russell 2000 Index Fund ETF Shares,Financial
+HONE,"HarborOne Bancorp, Inc.",Financial
+CGROU,Collective Growth Corporation,Financial
+DYAI,"Dyadic International, Inc.",Healthcare
+EFT,Eaton Vance Floating-Rate Income Trust,Financial
+PSHG,Performance Shipping Inc.,Industrials
+ALNA,"Allena Pharmaceuticals, Inc.",Healthcare
+PHIO,Phio Pharmaceuticals Corp.,Healthcare
+TNAV,"Telenav, Inc.",Technology
+MYO,"Myomo, Inc.",Healthcare
+RAVE,"RAVE Restaurant Group, Inc.",Consumer Cyclical
+RUBY,"Rubius Therapeutics, Inc.",Healthcare
+TAIL,Cambria Tail Risk ETF,Financial
+VRA,"Vera Bradley, Inc.",Consumer Cyclical
+ICL,Israel Chemicals Ltd.,Basic Materials
+OPTN,"OptiNose, Inc.",Healthcare
+PFXF,VanEck Vectors Preferred Securities ex Financials ETF,Financial
+VVPR,VivoPower International PLC,Technology
+PULS,PGIM Ultra Short Bond ETF,Financial
+PSTV,"Plus Therapeutics, Inc.",Healthcare
+SJB,ProShares Short High Yield,Financial
+SMMV,iShares Edge MSCI Min Vol USA Small-Cap ETF,Financial
+DNJR,Golden Bull Limited,Financial
+BBDC,"Barings BDC, Inc.",Financial
+MDYV,SPDR S&P 400 Mid Cap Value ETF,Financial
+IAGG,iShares Core International Aggregate Bond ETF,Financial
+BPT,BP Prudhoe Bay Royalty Trust,Energy
+FPF,First Trust Intermediate Duration Preferred & Income Fund,Financial
+MDYG,SPDR S&P 400 Mid Cap Growth ETF,Financial
+IEO,iShares U.S. Oil & Gas Exploration & Production ETF,Financial
+CBLI,"Cleveland BioLabs, Inc.",Healthcare
+FRA,"BlackRock Floating Rate Income Strategies Fund, Inc.",Financial
+RCS,"PIMCO Strategic Income Fund, Inc.",Financial
+CLMT,"Calumet Specialty Products Partners, L.P.",Energy
+MOSY,"MoSys, Inc.",Technology
+CFB,"CrossFirst Bankshares, Inc.",Financial
+PER,SandRidge Permian Trust,Energy
+IMAC,"IMAC Holdings, Inc.",Healthcare
+BIF,"Boulder Growth & Income Fund, Inc.",Financial
+SUB,iShares Short-Term National Muni Bond ETF,Financial
+ORIC,"ORIC Pharmaceuticals, Inc.",Healthcare
+BGR,BlackRock Energy and Resources Trust,Financial
+MLPX,Global X MLP & Energy Infrastructure ETF,Financial
+EWD,iShares MSCI Sweden ETF,Financial
+TUR,iShares MSCI Turkey ETF,Financial
+IVLU,iShares Edge MSCI Intl Value Factor ETF,Financial
+UTI,"Universal Technical Institute, Inc.",Consumer Defensive
+PML,PIMCO Municipal Income Fund II,Financial
+FV,First Trust Dorsey Wright Focus 5 ETF,Financial
+FNCL,Fidelity MSCI Financials Index ETF,Financial
+BKT,"BlackRock Income Trust, Inc.",Financial
+STIM,"Neuronetics, Inc.",Healthcare
+IGLB,iShares Long-Term Corporate Bond ETF,Financial
+TSC,"TriState Capital Holdings, Inc.",Financial
+TMV,Direxion Daily 20+ Year Treasury Bear 3X Shares,Financial
+VYMI,Vanguard International High Dividend Yield Index Fund ETF Shares,Financial
+IGOV,iShares International Treasury Bond ETF,Financial
+EDV,Vanguard Extended Duration Treasury Index Fund ETF Shares,Financial
+FPH,"Five Point Holdings, LLC",Real Estate
+GFL,GFL Environmental Inc.,Industrials
+EVT,Eaton Vance Tax-Advantaged Dividend Income Fund,Financial
+SLRC,Solar Capital Ltd.,Financial
+GSUM,Gridsum Holding Inc.,Technology
+GPM,Guggenheim Enhanced Equity Income Fund,Financial
+KRO,"Kronos Worldwide, Inc.",Basic Materials
+PXF,Invesco FTSE RAFI Developed Markets ex-U.S. ETF,Financial
+IBDL,iShares iBonds Dec 2020 Term Corporate ETF,Financial
+HMLP,Hoegh LNG Partners LP,Energy
+FDS,FactSet Research Systems Inc.,Financial
+VPU,Vanguard Utilities Index Fund ETF Shares,Financial
+ASIX,AdvanSix Inc.,Basic Materials
+PXLW,"Pixelworks, Inc.",Technology
+AEMD,"Aethlon Medical, Inc.",Healthcare
+ESGD,iShares ESG MSCI EAFE ETF,Financial
+BOE,BlackRock Enhanced Global Dividend Trust,Financial
+IJS,iShares S&P Small-Cap 600 Value ETF,Financial
+WSO,"Watsco, Inc.",Industrials
+BANC,"Banc of California, Inc.",Financial
+MCC,Medley Capital Corporation,Financial
+ELGX,"Endologix, Inc.",Healthcare
+PCEF,Invesco CEF Income Composite ETF,Financial
+HDEF,Xtrackers MSCI EAFE High Dividend Yield Equity ETF,Financial
+KRNY,Kearny Financial Corp.,Financial
+RNP,"Cohen & Steers REIT and Preferred Income Fund, Inc.",Financial
+CW,Curtiss-Wright Corporation,Industrials
+BGY,BlackRock Enhanced International Dividend Trust,Financial
+EFR,Eaton Vance Senior Floating-Rate Trust,Financial
+FXH,First Trust Health Care AlphaDEX Fund,Financial
+FUTY,Fidelity MSCI Utilities Index ETF,Financial
+NRK,Nuveen New York AMT-Free Quality Municipal Income Fund,Financial
+HCHC,"HC2 Holdings, Inc.",Communication Services
+FIZZ,National Beverage Corp.,Consumer Defensive
+RETA,"Reata Pharmaceuticals, Inc.",Healthcare
+GWX,SPDR S&P International Small Cap ETF,Financial
+AIN,Albany International Corp.,Consumer Cyclical
+MMLP,Martin Midstream Partners L.P.,Energy
+CRY,"CryoLife, Inc.",Healthcare
+HNGR,"Hanger, Inc.",Healthcare
+SLYG,SPDR S&P 600 Small Cap Growth ETF,Financial
+LAD,"Lithia Motors, Inc.",Consumer Cyclical
+RDWR,Radware Ltd.,Technology
+FEM,First Trust Emerging Markets AlphaDEX Fund,Financial
+NGHC,National General Holdings Corp.,Financial
+NXRT,"NexPoint Residential Trust, Inc.",Real Estate
+ABG,"Asbury Automotive Group, Inc.",Consumer Cyclical
+IIM,Invesco Value Municipal Income Trust,Financial
+IHI,iShares U.S. Medical Devices ETF,Financial
+ERII,"Energy Recovery, Inc.",Industrials
+XBIT,XBiotech Inc.,Healthcare
+SND,"Smart Sand, Inc.",Energy
+GLAD,Gladstone Capital Corporation,Financial
+XT,iShares Exponential Technologies ETF,Financial
+GSM,Ferroglobe PLC,Basic Materials
+QLTA,iShares Aaa - A Rated Corporate Bond ETF,Financial
+XAIR,"Beyond Air, Inc.",Healthcare
+EPOL,iShares MSCI Poland ETF,Financial
+DGLY,"Digital Ally, Inc.",Industrials
+MCFT,"MasterCraft Boat Holdings, Inc.",Consumer Cyclical
+RDIV,Invesco S&P Ultra Dividend Revenue ETF,Financial
+FTEK,"Fuel Tech, Inc.",Industrials
+IDEV,iShares Core MSCI International Developed Markets ETF,Financial
+CCMP,Cabot Microelectronics Corporation,Technology
+LPTH,"LightPath Technologies, Inc.",Technology
+AWR,American States Water Company,Utilities
+LOB,"Live Oak Bancshares, Inc.",Financial
+BSJM,Invesco BulletShares 2022 High Yield Corporate Bond ETF,Financial
+FFC,Flaherty & Crumrine Preferred Securities Income Fund Inc.,Financial
+RCKT,"Rocket Pharmaceuticals, Inc.",Healthcare
+DKL,"Delek Logistics Partners, LP",Energy
+VOOG,Vanguard S&P 500 Growth Index Fund ETF Shares,Financial
+RWO,SPDR Dow Jones Global Real Estate ETF,Financial
+FLNT,"Fluent, Inc.",Communication Services
+MED,"Medifast, Inc.",Consumer Cyclical
+BSM,"Black Stone Minerals, L.P.",Energy
+GOF,Guggenheim Strategic Opportunities Fund,Financial
+PRF,Invesco FTSE RAFI US 1000 ETF,Financial
+DJP,iPath Bloomberg Commodity Index Total Return(SM) ETN,Financial
+BEAT,"BioTelemetry, Inc.",Healthcare
+RPV,Invesco S&P 500 Pure Value ETF,Financial
+WSFS,WSFS Financial Corporation,Financial
+OMCL,"Omnicell, Inc.",Healthcare
+LE,"Lands' End, Inc.",Consumer Cyclical
+RNST,Renasant Corporation,Financial
+ALLK,Allakos Inc.,Healthcare
+WSBC,"WesBanco, Inc.",Financial
+RACE,Ferrari N.V.,Consumer Cyclical
+DPW,"DPW Holdings, Inc.",Industrials
+FIBK,"First Interstate BancSystem, Inc.",Financial
+PRAA,"PRA Group, Inc.",Financial
+FTSL,First Trust Senior Loan Fund,Financial
+BLNK,Blink Charging Co.,Consumer Cyclical
+BPMP,BP Midstream Partners LP,Energy
+NEWT,Newtek Business Services Corp.,Financial
+SMLP,"Summit Midstream Partners, LP",Energy
+IBKC,IBERIABANK Corporation,Financial
+ORA,"Ormat Technologies, Inc.",Utilities
+SBCF,Seacoast Banking Corporation of Florida,Financial
+CQP,"Cheniere Energy Partners, L.P.",Energy
+FRAN,Francesca's Holdings Corporation,Consumer Cyclical
+KNSA,"Kiniksa Pharmaceuticals, Ltd.",Healthcare
+VDC,Vanguard Consumer Staples Index Fund ETF Shares,Financial
+PFN,PIMCO Income Strategy Fund II,Financial
+HEI-A,HEICO Corporation,Industrials
+TRHC,"Tabula Rasa HealthCare, Inc.",Healthcare
+TFI,SPDR Nuveen Bloomberg Barclays Municipal Bond ETF,Financial
+ENS,EnerSys,Industrials
+DSU,"BlackRock Debt Strategies Fund, Inc.",Financial
+RADA,RADA Electronic Industries Ltd.,Industrials
+HTBK,Heritage Commerce Corp,Financial
+ADX,"Adams Diversified Equity Fund, Inc.",Financial
+GILT,Gilat Satellite Networks Ltd.,Technology
+PEY,Invesco High Yield Equity Dividend Achievers ETF,Financial
+FCFS,"FirstCash, Inc.",Financial
+EMD,Western Asset Emerging Markets Debt Fund Inc.,Financial
+SSD,"Simpson Manufacturing Co., Inc.",Industrials
+IEZ,iShares U.S. Oil Equipment & Services ETF,Financial
+DFIN,"Donnelley Financial Solutions, Inc.",Financial
+CBU,"Community Bank System, Inc.",Financial
+PSK,SPDR Wells Fargo Preferred Stock ETF,Financial
+PI,"Impinj, Inc.",Technology
+TPVG,TriplePoint Venture Growth BDC Corp.,Financial
+PHB,Invesco Fundamental High Yield Corporate Bond ETF,Financial
+OGS,"ONE Gas, Inc.",Utilities
+CCLP,CSI Compressco LP,Energy
+HRI,Herc Holdings Inc.,Industrials
+TTEK,"Tetra Tech, Inc.",Industrials
+SPMB,SPDR Portfolio Mortgage Backed Bond ETF,Financial
+TBF,ProShares Short 20+ Year Treasury,Financial
+CMP,"Compass Minerals International, Inc.",Basic Materials
+EGY,"VAALCO Energy, Inc.",Energy
+HYS,PIMCO 0-5 Year High Yield Corporate Bond Index ETF,Financial
+ICHR,"Ichor Holdings, Ltd.",Technology
+LHCG,"LHC Group, Inc.",Healthcare
+ENV,"Envestnet, Inc.",Technology
+FN,Fabrinet,Technology
+JHMM,John Hancock Multifactor Mid Cap ETF,Financial
+PATK,"Patrick Industries, Inc.",Industrials
+SRI,"Stoneridge, Inc.",Consumer Cyclical
+ECPG,"Encore Capital Group, Inc.",Financial
+IBDM,iShares iBonds Dec 2021 Term Corporate ETF,Financial
+DWSH,AdvisorShares Dorsey Wright Short ETF,Financial
+UTG,Reaves Utility Income Fund,Financial
+VHT,Vanguard Health Care Index Fund ETF Shares,Financial
+DARE,"Dare Bioscience, Inc.",Healthcare
+AMED,"Amedisys, Inc.",Healthcare
+FBND,Fidelity Total Bond ETF,Financial
+CSPR,Casper Sleep Inc.,Consumer Cyclical
+VGLT,Vanguard Long-Term Treasury Index Fund ETF Shares,Financial
+EDNT,"Edison Nation, Inc.",Consumer Cyclical
+KLIC,"Kulicke and Soffa Industries, Inc.",Technology
+EBIX,"Ebix, Inc.",Technology
+TCS,"The Container Store Group, Inc.",Consumer Cyclical
+FBM,"Foundation Building Materials, Inc.",Industrials
+IYF,iShares U.S. Financials ETF,Financial
+QTEC,First Trust NASDAQ-100-Technology Sector Index Fund,Financial
+ONCS,OncoSec Medical Incorporated,Healthcare
+CORE,"Core-Mark Holding Company, Inc.",Consumer Defensive
+JRO,Nuveen Floating Rate Income Opportunity Fund,Financial
+BBAX,JPMorgan BetaBuilders Developed Asia ex-Japan ETF,Financial
+PRNB,Principia Biopharma Inc.,Healthcare
+AGGY,WisdomTree Yield Enhanced U.S. Aggregate Bond Fund,Financial
+CWST,"Casella Waste Systems, Inc.",Industrials
+BAB,Invesco Taxable Municipal Bond ETF,Financial
+ICD,"Independence Contract Drilling, Inc.",Energy
+NSIT,"Insight Enterprises, Inc.",Technology
+EVOP,"EVO Payments, Inc.",Technology
+CSGS,"CSG Systems International, Inc.",Technology
+KRMD,"Repro Med Systems, Inc.",Healthcare
+IBOC,International Bancshares Corporation,Financial
+ITA,iShares U.S. Aerospace & Defense ETF,Financial
+ATR,"AptarGroup, Inc.",Consumer Cyclical
+BBX,BBX Capital Corporation,Consumer Cyclical
+LRGF,iShares Edge MSCI Multifactor USA ETF,Financial
+DIV,Global X SuperDividend U.S. ETF,Financial
+MKSI,"MKS Instruments, Inc.",Technology
+GCP,GCP Applied Technologies Inc.,Basic Materials
+AXE,Anixter International Inc.,Industrials
+JW-A,"John Wiley & Sons, Inc.",Communication Services
+SWX,"Southwest Gas Holdings, Inc.",Utilities
+SSB,South State Corporation,Financial
+BSJK,Invesco BulletShares 2020 High Yield Corporate Bond ETF,Financial
+CASH,"Meta Financial Group, Inc.",Financial
+VWOB,Vanguard Emerging Markets Government Bond Index Fund ETF Shares,Financial
+IFMK,iFresh Inc.,Consumer Defensive
+PFS,"Provident Financial Services, Inc.",Financial
+PKX,POSCO,Basic Materials
+USRT,iShares Core U.S. REIT ETF,Financial
+NGM,"NGM Biopharmaceuticals, Inc.",Healthcare
+CTR,ClearBridge MLP and Midstream Total Return Fund Inc,Financial
+CR,Crane Co.,Industrials
+RS,Reliance Steel & Aluminum Co.,Basic Materials
+IDLV,Invesco S&P International Developed Low Volatility ETF,Financial
+CUBI,"Customers Bancorp, Inc.",Financial
+GAIN,Gladstone Investment Corporation,Financial
+VIGI,Vanguard International Dividend Appreciation Index Fund ETF Shares,Financial
+HYAC,Haymaker Acquisition Corp. II,Financial
+BIMI,BOQI International Medical Inc.,Healthcare
+QUAD,"Quad/Graphics, Inc.",Industrials
+SSP,The E.W. Scripps Company,Communication Services
+ACRS,"Aclaris Therapeutics, Inc.",Healthcare
+ATEC,"Alphatec Holdings, Inc.",Healthcare
+TYME,"Tyme Technologies, Inc.",Healthcare
+FSP,Franklin Street Properties Corp.,Real Estate
+SPXC,SPX Corporation,Industrials
+SLQD,iShares 0-5 Year Investment Grade Corporate Bond ETF,Financial
+ONTO,Onto Innovation Inc.,Technology
+BOKF,BOK Financial Corporation,Financial
+KMF,"Kayne Anderson Midstream/Energy Fund, Inc.",Financial
+PEN,"Penumbra, Inc.",Healthcare

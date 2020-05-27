@@ -12,3 +12,5 @@ tools/__pycache__/run_all.cpython-37.pyc
 output/all_indicators.feather
 docs/prices.csv
 output/trades.csv
+docs/eps.csv
+tools/extract/__pycache__/pe_ratio.cpython-37.pyc
