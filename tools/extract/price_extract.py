@@ -24,13 +24,13 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def stocks_pool():
+def stocks_pool(stocks_path='../docs/my_stocks.csv'):
     """
     Extract stocks from csv file
     """
 
     # Read csv with stocks
-    my_stocks_df = pd.read_csv('../docs/my_stocks.csv', header=0)
+    my_stocks_df = pd.read_csv(stocks_path, header=0)
     my_stocks = my_stocks_df.values.tolist()
 
     # Create list with symbols from finviz
@@ -204,12 +204,12 @@ def all_prices_full_refresh(prices_list, interval, my_stocks):
 
     return all_prices
 
-def main_prices(full_refresh=False, do_not_refresh=False):
+def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/my_stocks.csv'):
 
     print('Start Update Prices Process ...')
 
     # Get list of stocks
-    my_stocks_symbols, my_stocks = stocks_pool()
+    my_stocks_symbols, my_stocks = stocks_pool(stocks_path = stocks_path)
 
     if do_not_refresh == True:
 
