@@ -379,7 +379,9 @@ def main_indicators(all_prices, my_stocks_symbols, full_refresh=True):
         indicators_df = indicators_parallel(all_prices, my_stocks_symbols=my_stocks_symbols)
 
         print('Exporting Indicators')
+
         # Export indiciators
+        indicators_df['just_date'] = indicators_df['just_date'].astype(str)
         indicators_df.reset_index(drop=True).to_feather('../output/all_indicators.feather')
 
         return indicators_df
