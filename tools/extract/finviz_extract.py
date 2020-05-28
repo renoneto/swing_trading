@@ -1,13 +1,13 @@
 from bs4 import BeautifulSoup
 from requests import Session
-
+import pandas as pd
 
 HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '\
                          'AppleWebKit/537.36 (KHTML, like Gecko) '\
                          'Chrome/75.0.3770.80 Safari/537.36'}
 
 
-def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o300&ft=4&o=volume'):
+def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o=volume'):
     """
     Function to scrape symbols out of Finviz's website based on the URL that was given.
     The output is a list of symbols with company name and industry.
@@ -60,10 +60,14 @@ def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o300&ft=
             # Name
             symbol_name = symbol_table[2].text
             # Industry
-            symbol_sector = symbol_table[3].text
+            symbol_industry = symbol_table[3].text
+            # Sector
+            symbol_sector = symbol_table[4].text
+            # Industry
+            symbol_marketcap = symbol_table[6].text
 
             # Append all
-            my_stocks.append([symbol, symbol_name, symbol_sector])
+            my_stocks.append([symbol, symbol_name, symbol_industry, symbol_sector, symbol_marketcap])
 
             stocks_imported += 1
 
@@ -74,5 +78,9 @@ def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o300&ft=
         else:
             print(f"{stocks_imported} stocks imported")
             page += 20
+
+    # Data Frame
+    df = pd.DataFrame(my_stocks, columns = ['symbol', 'description', 'industry', 'sector', 'market_cap'])
+    df.to_csv('../docs/my_stocks.csv', index=0)
 
     return my_stocks
