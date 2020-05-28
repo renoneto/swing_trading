@@ -29,14 +29,14 @@ def extract_eps():
                 list_to_append.append(i)
 
     # Create dataframe with results
-    eps_df = pd.concat(results_list)
+    eps_df = pd.DataFrame(list_to_append)
     eps_df.columns = ['timestamp', 'eps', 'symbol']
 
     # Export
-    eps['timestamp'] = pd.to_datetime(eps['timestamp'], unit='ms')
-    eps.to_csv('../docs/eps.csv', index=0)
+    eps_df['timestamp'] = pd.to_datetime(eps_df['timestamp'], unit='ms')
+    eps_df.to_csv('../docs/eps.csv', index=0)
 
-def merge_eps(eps, eps_location='../docs/eps.csv'):
+def merge_eps(eps):
     """
     Function to merge EPS with prices, calculate TTM EPS and PE Ratio
     """
@@ -68,7 +68,7 @@ def merge_eps(eps, eps_location='../docs/eps.csv'):
     pe_ratio['pe_ratio'] = pe_ratio['close_price'] / pe_ratio['ttm_eps']
 
     # Export file
-    pe_ratio[['timestamp', 'eps', 'ttm_eps', 'pe_ratio']].to_csv('../docs/eps.csv', index=0)
+    pe_ratio[['timestamp', 'symbol', 'eps', 'ttm_eps', 'pe_ratio']].to_csv('../docs/eps_pe_ratio.csv', index=0)
 
     return pe_ratio
 
@@ -76,10 +76,6 @@ def main_pe(full_refresh=False):
 
     if full_refresh == False:
         eps = pd.read_csv('../docs/eps.csv')
-
-        if 'ttm_eps' in eps.columns:
-            eps.drop('ttm_eps', axis=1, inplace=True)
-
         pe_ratio = merge_eps(eps)
 
     else:
