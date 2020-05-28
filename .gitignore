@@ -14,3 +14,4 @@ docs/prices.csv
 output/trades.csv
 docs/eps.csv
 tools/extract/__pycache__/pe_ratio.cpython-37.pyc
+docs/eps_pe_ratio.csv
