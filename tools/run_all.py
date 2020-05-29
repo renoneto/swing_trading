@@ -4,6 +4,7 @@ from os import path
 
 from extract.price_extract import main_prices
 from extract.pe_ratio import main_pe
+from extract.market_cap import market_cap
 from indicators.indicators import main_indicators
 from signals.create_signals import main_signals
 
@@ -47,7 +48,7 @@ def main(full_refresh=False,
     start2 = time.time()
 
     """
-    PE RATIO
+    PE RATIO & MARKET CAP
     """
     if full_refresh == False:
         pe_and_prices = main_pe(all_prices, full_refresh=False)
@@ -55,13 +56,15 @@ def main(full_refresh=False,
         print('Running Full Refresh on PE Ratios')
         pe_and_prices = main_pe(all_prices, full_refresh=True)
 
+    # Calculate Market Cap
+    pe_and_prices = market_cap(pe_and_prices)
+
     # End Timer
     end = time.time()
-    print('It took ' + str(int(end - start2)) + ' seconds to update PE Ratios.')
+    print('It took ' + str(int(end - start2)) + ' seconds to update PE Ratios and Market Caps.')
 
     # Start Tracking Time 2
     start2 = time.time()
-
     """
     RUN INDICATORS
     """

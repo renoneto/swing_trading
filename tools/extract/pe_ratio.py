@@ -91,6 +91,12 @@ def merge_eps(df, all_prices):
     prices_pe['pe_ratio'] = prices_pe['close_price'] / prices_pe['eps_ttm']
     prices_pe['pe_ratio'] = prices_pe['pe_ratio'].round(3)
 
+    # Drop columns
+    prices_pe.drop(['just_date_merge', 'timestamp_merge'], inplace=True, axis=1)
+
+    # Export
+    prices_pe.to_csv('../docs/pe_prices.csv', index=0)
+
     return prices_pe
 
 def main_pe(all_prices, full_refresh=False):

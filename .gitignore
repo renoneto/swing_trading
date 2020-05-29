@@ -16,3 +16,6 @@ docs/eps.csv
 tools/extract/__pycache__/pe_ratio.cpython-37.pyc
 docs/eps_pe_ratio.csv
 docs/pe_ratio.csv
+tools/extract/__pycache__/market_cap.cpython-37.pyc
+docs/pe_and_prices_market_cap.csv
+docs/pe_prices.csv
