@@ -50,13 +50,14 @@ def main(full_refresh=False,
     PE RATIO
     """
     if full_refresh == False:
-        pe_and_prices = main_pe(full_refresh=False)
+        pe_and_prices = main_pe(all_prices, full_refresh=False)
     else:
-        pe_and_prices = main_pe(full_refresh=True)
+        print('Running Full Refresh on PE Ratios')
+        pe_and_prices = main_pe(all_prices, full_refresh=True)
 
     # End Timer
     end = time.time()
-    print('It took ' + str(int(end - start)) + ' seconds to create PE Ratios.')
+    print('It took ' + str(int(end - start2)) + ' seconds to update PE Ratios.')
 
     # Start Tracking Time 2
     start2 = time.time()
