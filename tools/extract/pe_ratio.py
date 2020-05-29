@@ -1,8 +1,12 @@
-import requests
+from requests import Session
 from bs4 import BeautifulSoup
 import pandas as pd
 
-def extract_eps():
+HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '\
+                         'AppleWebKit/537.36 (KHTML, like Gecko) '\
+                         'Chrome/75.0.3770.80 Safari/537.36'}
+
+def extract_pe():
     """
     Function to extract EPS from websit
     """
@@ -17,69 +21,90 @@ def extract_eps():
     # Start loop by creating empty list and calculate lenght, so we can track completion
     lenght = len(list_of_stocks)
 
+    # Create Session
+    s = Session()
+
+    # Add headers
+    s.headers.update(HEADERS)
+
     # For every single stock, do the following
     for idx, stock in enumerate(list_of_stocks):
+
+        # Print Progress
         print((idx+1)/lenght)
-        url = f'https://ycharts.com/charts/fund_data.json?securities=include%3Atrue%2Cid%3A{stock}%2C%2C&calcs=include%3Atrue%2Cid%3Aeps%2C%2C'
-        response = requests.get(url)
-        if len(response.text) > 64:
-            json = response.json()
-            for i in json['chart_data'][0][0]['raw_data']:
-                i.append(stock)
-                list_to_append.append(i)
+
+        # Create URL
+        url = f'https://widget3.zacks.com/data/chart/json/{stock}/pe_ratio/www.zacks.com'
+
+        # Request and transform response in json
+        screener = s.get(url)
+        json = screener.json()
+
+        # Check for error
+        if len(json) > 1:
+
+            try:
+                # Append results into list
+                [list_to_append.append([i[0], i[1], stock]) for i in json['weekly_pe_ratio'].items()]
+            except KeyError:
+                continue
 
     # Create dataframe with results
-    eps_df = pd.DataFrame(list_to_append)
-    eps_df.columns = ['timestamp', 'eps', 'symbol']
+    pe_ratio_df = pd.DataFrame(list_to_append)
+    pe_ratio_df.columns = ['timestamp', 'pe_ratio', 'symbol']
 
     # Export
-    eps_df['timestamp'] = pd.to_datetime(eps_df['timestamp'], unit='ms')
-    eps_df.to_csv('../docs/eps.csv', index=0)
+    pe_ratio_df['timestamp'] = pd.to_datetime(pe_ratio_df['timestamp'])
+    pe_ratio_df.to_csv('../docs/pe_ratio.csv', index=0)
 
-def merge_eps(eps):
+    return pe_ratio_df
+
+def merge_eps(df, all_prices):
     """
     Function to merge EPS with prices, calculate TTM EPS and PE Ratio
     """
 
-    # Reset Index so we can group by index
-    eps = eps.sort_values(['symbol', 'timestamp']).reset_index(drop=True)
+    # Rename columns, convert column to datetime and keep only records where date > 2017-01-01
+    df.columns = ['timestamp_merge', 'pe_ratio', 'symbol']
+    df['timestamp_merge'] = pd.to_datetime(df['timestamp_merge'])
+    df = df[df['timestamp_merge'] > '2017-01-01']
 
-    # Calculate TTM EPS
-    ttm = eps.groupby('symbol')['eps'].rolling(4).sum().reset_index()
-    ttm.columns = ['symbol', 'date', 'ttm_eps']
+    # Convert all prices column to datetime
+    all_prices['just_date_merge'] = pd.to_datetime(all_prices['just_date'])
 
-    # Merge both
-    eps = pd.merge(eps, ttm[['ttm_eps']], left_index=True, right_index=True)
+    # Merge both dataframes
+    prices_pe = pd.merge(all_prices,
+                    df,
+                    left_on = ['just_date_merge', 'symbol'],
+                    right_on = ['timestamp_merge', 'symbol'],
+                    how='left')
 
-    # Read prices
-    prices_df = pd.read_csv('../docs/prices.csv')
+    # Calculate EPS TTM based on weekly PE Ratios
+    prices_pe['eps_ttm'] = prices_pe['close_price'] / prices_pe['pe_ratio']
+    prices_pe['eps_ttm'] = prices_pe['eps_ttm'].round(3)
 
-    # Concatenate DataFrames
-    pe_ratio = pd.concat([prices_df, eps]).sort_values(['symbol', 'timestamp'])
-    pe_ratio['timestamp'] = pd.to_datetime(pe_ratio['timestamp'])
-    pe_ratio = pe_ratio.sort_values(['symbol', 'timestamp']).reset_index(drop=True)
+    # Since we have only Weekly Value we can Forward/Backward Fill the EPS TTM
+    prices_pe['eps_ttm'] = prices_pe.groupby('symbol').ffill()['eps_ttm']
+    prices_pe['eps_ttm'] = prices_pe.groupby('symbol').bfill()['eps_ttm']
 
-    # Forward Fill numbers
-    pe_ratio['eps'] = pe_ratio.groupby('symbol').ffill()['eps']
-    pe_ratio['ttm_eps'] = pe_ratio.groupby('symbol').ffill()['ttm_eps']
-    pe_ratio.dropna(subset=['interval'], inplace=True)
+    # Calculate PE Ratio with EPS TTM and round numbers
+    prices_pe['pe_ratio'] = prices_pe['close_price'] / prices_pe['eps_ttm']
+    prices_pe['pe_ratio'] = prices_pe['pe_ratio'].round(3)
 
-    # Calculate PE Ratio
-    pe_ratio['pe_ratio'] = pe_ratio['close_price'] / pe_ratio['ttm_eps']
+    return prices_pe
 
-    # Export file
-    pe_ratio[['timestamp', 'symbol', 'eps', 'ttm_eps', 'pe_ratio']].to_csv('../docs/eps_pe_ratio.csv', index=0)
+def main_pe(all_prices, full_refresh=False):
 
-    return pe_ratio
-
-def main_pe(full_refresh=False):
-
+    # If a full refresh is not necessary
     if full_refresh == False:
-        eps = pd.read_csv('../docs/eps.csv')
-        pe_ratio = merge_eps(eps)
+
+        # Read existing PE Ratios and merge it with all prices
+        pe_ratio = pd.read_csv('../docs/pe_ratio.csv')
+        pe_ratio = merge_eps(pe_ratio, all_prices)
 
     else:
-        eps = extract_eps()
-        pe_ratio = merge_eps(eps)
+        # Extract from website and
+        pe_ratio = extract_pe()
+        pe_ratio = merge_eps(pe_ratio, all_prices)
 
     return pe_ratio
