@@ -159,7 +159,7 @@ def all_prices_incremental(prices_list, interval, my_stocks, current_prices, sta
     incremental_prices.columns = ['timestamp', 'high_price', 'low_price', 'open_price', 'close_price', 'volume', 'symbol', 'interval', 'just_date']
 
     # Merge with more data that we got from finviz (name and industry)
-    name_industry = pd.DataFrame(my_stocks, columns=['symbol', 'name', 'industry'])
+    name_industry = pd.DataFrame(my_stocks, columns=['symbol', 'name', 'industry', 'sector', 'market_cap'])
     incremental_prices = pd.merge(incremental_prices, name_industry, on='symbol')
 
     # All prices - Concatenate Incremental with Current Prices
@@ -192,7 +192,7 @@ def all_prices_full_refresh(prices_list, interval, my_stocks):
     all_prices.columns = ['timestamp', 'high_price', 'low_price', 'open_price', 'close_price', 'volume', 'symbol', 'interval', 'just_date']
 
     # Merge with more data that we got from finviz (name and industry)
-    name_industry = pd.DataFrame(my_stocks, columns=['symbol', 'name', 'industry'])
+    name_industry = pd.DataFrame(my_stocks, columns=['symbol', 'name', 'industry', 'sector', 'market_cap'])
     all_prices = pd.merge(all_prices, name_industry, on='symbol')
 
     # All prices - Concatenate Incremental with Current Prices
@@ -246,18 +246,15 @@ def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/m
         # Calculate start_date and interval
         start_date, interval = interval_start_date(min_max_prices=min_max_prices, most_recent_str=most_recent_str, full_refresh=full_refresh)
 
-        print('Run Prices')
         # Run Prices in Parallel
         prices_list = run_prices_parallel(my_stocks_symbols, start_date, interval)
 
         if full_refresh == False:
-            print('Merging with Existing Prices')
 
             # Add Incremental to main
             all_prices = all_prices_incremental(prices_list, interval, my_stocks, current_prices, start_date)
 
         else:
-            print('Prices Full Refresh')
 
             # Full Refresh
             all_prices = all_prices_full_refresh(prices_list, interval, my_stocks)
