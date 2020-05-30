@@ -34,4 +34,39 @@ def market_cap(pe_and_prices):
     # Export
     pe_and_prices.to_csv('../docs/pe_and_prices_market_cap.csv', index=0)
 
+    # Market Cap Analysis
+    pe_and_prices = market_cap_analysis(pe_and_prices)
+
+    return pe_and_prices
+
+def market_cap_analysis(pe_and_prices):
+
+    # Calculate Average Market Cap by Industry/Sector overtime
+    daily_market_cap_sum = pe_and_prices[['just_date', 'industry', 'sector', 'market_cap']].groupby(['just_date', 'industry', 'sector']).sum()['market_cap']
+    daily_market_cap_count = pe_and_prices[['just_date', 'industry', 'sector', 'market_cap']].groupby(['just_date', 'industry', 'sector']).count()['market_cap']
+    daily_average_market_cap = daily_market_cap_sum / daily_market_cap_count
+
+    # Reset Index
+    daily_average_market_cap = daily_average_market_cap.reset_index()
+    daily_market_cap_count = daily_market_cap_count.reset_index()
+    daily_market_cap_sum = daily_market_cap_sum.reset_index()
+
+    # Rename columns
+    daily_average_market_cap.columns = ['just_date', 'industry', 'sector', 'avg_market_cap']
+    daily_market_cap_count.columns = ['just_date', 'industry', 'sector', 'count_market_cap']
+    daily_market_cap_sum.columns = ['just_date', 'industry', 'sector', 'sum_market_cap']
+
+    # Create master and drop NaNs
+    daily_market_cap = pd.merge(daily_average_market_cap, daily_market_cap_count, on=['just_date', 'industry', 'sector'])
+    daily_market_cap = pd.merge(daily_market_cap, daily_market_cap_sum, on=['just_date', 'industry', 'sector'])
+    daily_market_cap = daily_market_cap.dropna()
+
+    # Merge with original
+    pe_and_prices['just_date'] = pd.to_datetime(pe_and_prices['just_date'])
+    daily_market_cap['just_date'] = pd.to_datetime(daily_market_cap['just_date'])
+    pe_and_prices = pd.merge(pe_and_prices, daily_market_cap, how='left', on=['just_date', 'industry', 'sector'])
+
+    # Calculate % of Market Cap
+    pe_and_prices['perc_market_cap'] = pe_and_prices['market_cap'] / pe_and_prices['sum_market_cap']
+
     return pe_and_prices
