@@ -50,6 +50,8 @@ def main(full_refresh=False,
     """
     PE RATIO & MARKET CAP
     """
+    print('Calculate PE Ratio and Market Cap')
+
     if full_refresh == False:
         pe_and_prices = main_pe(all_prices, full_refresh=False)
     else:
