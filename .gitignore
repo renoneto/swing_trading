@@ -19,3 +19,23 @@ docs/pe_ratio.csv
 tools/extract/__pycache__/market_cap.cpython-37.pyc
 docs/pe_and_prices_market_cap.csv
 docs/pe_prices.csv
+tools/signals/__pycache__/track_record.cpython-37.pyc
+notebooks/config.py
+notebooks/__pycache__/config.cpython-37.pyc
+tools/extract/__pycache__/zacks_extract.cpython-37.pyc
+docs/book_value_ttm.csv
+docs/eps_ttm.csv
+docs/price_to_book_value.csv
+notebooks/test.csv
+tools/trading/credentials.py
+tools/trading/__pycache__/account_info.cpython-37.pyc
+tools/trading/__pycache__/connect.cpython-37.pyc
+tools/trading/__pycache__/credentials.cpython-37.pyc
+tools/trading/__pycache__/orders.cpython-37.pyc
+tools/trading/__pycache__/quotes.cpython-37.pyc
+tools/trading/__pycache__/td_trading.cpython-37.pyc
+tools/trading/access_token.txt
+notebooks/ThinkorSwin API.ipynb
+tools/trading/__pycache__/transactions.cpython-37.pyc
+notebooks/index_analysis.csv
+notebooks/pe_prices_market_cap_analysis.csv
