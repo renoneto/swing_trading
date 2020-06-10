@@ -13,6 +13,34 @@ def create_signals(indicators_df, number_of_signals=5):
         indicators_df[f'buy_signal?{i}'] = np.nan
         indicators_df[f'sell_signal?{i}'] = np.nan
 
+    # EPS Validator
+    indicators_df['eps_growing'] = np.nan
+    indicators_df['eps_growing'].mask(
+                                    (
+                                        (indicators_df['eps_ttm_difference_0_60'] >= 0)
+                                        & (indicators_df['eps_ttm_difference_60_120'] > 0)
+                                        & (indicators_df['eps_ttm_difference_120_180'] > 0)
+                                    )
+                                    , True, inplace = True)
+
+    indicators_df['eps_falling'] = np.nan
+    indicators_df['eps_falling'].mask(
+                                    (
+                                        (indicators_df['eps_ttm_difference_0_60'] <= 0)
+                                        & (indicators_df['eps_ttm_difference_60_120'] < 0)
+                                        & (indicators_df['eps_ttm_difference_120_180'] < 0)
+                                    )
+                                    , True, inplace = True)
+
+    # Sector Bechmark Validator
+    #indicators_df['benchmark_indicator'] = np.nan
+    #indicators_df['benchmark_indicator'].mask(
+    #                                (
+    #                                    (indicators_df['moving_10d_return_index'] > indicators_df['moving_30d_return_index'])
+    #                                    & (indicators_df['moving_30d_return_index'] > indicators_df['moving_60d_return_index'])
+    #                                )
+    #                                , True, inplace = True)
+
     # DEFINE BUY SIGNALS
     '''
     Buy Signal 1:
@@ -33,6 +61,8 @@ def create_signals(indicators_df, number_of_signals=5):
                                         & (indicators_df['macd_line_3d_min_coef'] > indicators_df['macd_line_5d_min_coef'])
                                         & (indicators_df['macd_line'] > indicators_df['macd_signal_line'])
                                         & ((indicators_df['bb_bbm'] + indicators_df['bb_std']) > indicators_df['close_price_x'])
+                                        & (indicators_df['eps_falling'] != True)
+                                        & (indicators_df['avg_volume'] > 300000)
                                     )
                                     , True, inplace = True)
 
@@ -46,6 +76,9 @@ def create_signals(indicators_df, number_of_signals=5):
                                         ((indicators_df['bb_bbm'] + indicators_df['bb_std']) > indicators_df['close_price_x'])
                                         & (indicators_df['macd_line'] > indicators_df['macd_signal_line'])
                                         & (indicators_df['macd_line'] < indicators_df['macd_sig_line_shift_3d'])
+                                        & (indicators_df['eps_falling'] != True)
+                                        & (indicators_df['avg_volume'] > 300000)
+                                        #& (indicators_df['benchmark_indicator'] == True)
                                     )
                                     , True, inplace = True)
 
@@ -71,6 +104,9 @@ def create_signals(indicators_df, number_of_signals=5):
                                         & (indicators_df['macd_hist_3d_shift'] > (indicators_df['macd_hist_avg_35'] - (3 * indicators_df['macd_hist_std_35'])))
                                         & (indicators_df['macd_hist_3d_shift'] < (indicators_df['macd_hist_avg_35'] - (1.75 * indicators_df['macd_hist_std_35'])))
                                         & (indicators_df['macd_hist'] < 0)
+                                        & (indicators_df['eps_falling'] != True)
+                                        & (indicators_df['avg_volume'] > 300000)
+                                        #& (indicators_df['benchmark_indicator'] == True)
                                     )
                                     , True, inplace = True)
 
@@ -86,12 +122,16 @@ def create_signals(indicators_df, number_of_signals=5):
     indicators_df['buy_signal?4'].mask(
                                     (
                                         (indicators_df['sma_10d_20d_ratio'] > 0.99)
-                                        &(indicators_df['sma_10d_20d_ratio'] < 1.01)
-                                        &(indicators_df['sma_20d_50d_ratio'] > indicators_df['sma_20d_50d_ratio_shift'])
-                                        &(indicators_df['sma_10d_20d_ratio_shift'] > indicators_df['sma_10d_20d_ratio_shift_2'])
-                                        &(indicators_df['sma_10d_20d_ratio'] > indicators_df['sma_10d_20d_ratio_shift_2'])
-                                        &(indicators_df['sma_10d_20d_ratio'] > indicators_df['sma_20d_50d_ratio'])
-                                        &(indicators_df['sma_20d_50d_ratio_coef_2d'] > 0.001)
+                                        & (indicators_df['sma_10d_20d_ratio'] < 1.01)
+                                        & (indicators_df['sma_20d_50d_ratio'] > indicators_df['sma_20d_50d_ratio_shift'])
+                                        & (indicators_df['sma_10d_20d_ratio_shift'] > indicators_df['sma_10d_20d_ratio_shift_2'])
+                                        & (indicators_df['sma_10d_20d_ratio'] > indicators_df['sma_10d_20d_ratio_shift_2'])
+                                        & (indicators_df['sma_10d_20d_ratio'] > indicators_df['sma_20d_50d_ratio'])
+                                        & (indicators_df['sma_20d_50d_ratio_coef_2d'] > 0.001)
+                                        #& (indicators_df['sma_50d_100d_ratio'] > indicators_df['sma_50d_100d_ratio_shift_10'])
+                                        & (indicators_df['eps_ttm_difference_0_60'] >= 0)
+                                        & (indicators_df['avg_volume'] > 300000)
+                                        & (indicators_df['close_price_x'] > indicators_df['sma_50d'])
                                     )
                                     , True, inplace=True)
 
@@ -107,6 +147,8 @@ def create_signals(indicators_df, number_of_signals=5):
                                         &(indicators_df['sma_200d_shift'] > indicators_df['sma_50d_shift'])
                                         & (indicators_df['close_price_x'] > indicators_df['sma_200d'])
                                         & (indicators_df['macd_hist'] > 0)
+                                        & (indicators_df['eps_ttm_difference_0_60'] >= 0)
+                                        & (indicators_df['avg_volume'] > 300000)
                                     )
                                     , True, inplace=True)
 
@@ -130,6 +172,9 @@ def create_signals(indicators_df, number_of_signals=5):
                                     |
                                         ((indicators_df['macd_line_shift_2d'] > indicators_df['macd_sig_line_shift_2d'])
                                         & (indicators_df['macd_line'] < indicators_df['macd_signal_line']))
+                                    |
+                                        ((indicators_df['close_price_x'] < indicators_df['bb_bbm'])
+                                        & (indicators_df['close_price_shift'] > indicators_df['bb_bbm_1']))
                                     )
                                     , True, inplace=True)
 

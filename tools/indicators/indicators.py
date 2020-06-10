@@ -14,7 +14,6 @@ import ta
 
 warnings.filterwarnings('ignore')
 
-
 def run_indicators(df
                    , results_list
                    , symbol
@@ -32,10 +31,6 @@ def run_indicators(df
     # Add ta features filling NaN values
     df_2 = df[df['symbol'] == symbol]
 
-    # Add empty Columns
-    df_2['low_is_min_7'] = NaN
-    df_2['low_is_min_14'] = NaN
-
     # Create empty_df
     empty_df = df_2.copy()
     empty_df['momentum_rsi'] = 0
@@ -47,10 +42,10 @@ def run_indicators(df
 
     if length > 14:
         # Close price shift
-        df_2['close_price_shift'] = df_2['close_price'].shift(-1)
+        #df_2['close_price_shift'] = df_2['close_price'].shift(-1)
 
          # Shift prices one day
-        df_2[['high_previous', 'low_previous', 'close_previous', 'open_previous']] = df_2[['high_price', 'low_price', 'close_price', 'open_price']].shift(1)
+        #df_2[['high_previous', 'low_previous', 'close_previous', 'open_previous']] = df_2[['high_price', 'low_price', 'close_price', 'open_price']].shift(1)
 
         # Support and Resistance Prices
         #for row in min_max_rows:
@@ -64,15 +59,37 @@ def run_indicators(df
         #    df_2[f'close_max_d{row}'] = df_2['close_price'].rolling(row).max()
         #    df_2[f'open_max_d{row}'] = df_2['open_price'].rolling(row).max()
 
-        # Year from timestamp
+        # Average Volume
+        df_2['avg_volume'] = df_2['volume'].rolling(90).mean()
+
+        # EPS TTM Last 60, 120, 180, 240, 300
+        for idx, i in enumerate([60, 120, 180, 240, 300, 360, 420, 480, 540]):
+            # Shift Columns - Calculate Past EPS TTM
+            df_2[f'past_eps_ttm_{i}'] = df_2['eps_ttm'].shift(i)
+
+        # Calculate Growth of EPS
+        for idx, i in enumerate([60, 120, 180, 240, 300, 360, 420, 480, 540]):
+            # Compare EPS TTMs - Current with Previous - Previous with Previous of Previous and so on
+            for idx2, y in enumerate([60, 120, 180, 240, 300, 360, 420, 480, 540]):
+                # If difference is one it means that y comes right after i.
+                if idx2 - idx == 1:
+                    # Calculate Growth
+                    df_2[f'eps_ttm_difference_{i}_{y}'] = (df_2[f'past_eps_ttm_{i}'] - df_2[f'past_eps_ttm_{y}']) / df_2[f'past_eps_ttm_{y}'].abs()
+
+        # Calculate Current - EPS TTM 60 (For simplicity, I chose to keep it out of the loop above)
+        df_2['eps_ttm_difference_0_60'] = (df_2[f'eps_ttm'] / df_2[f'past_eps_ttm_60']) - 1
+
+        # Year and Week No from timestamp
         df_2['year'] = pd.DatetimeIndex(df_2['timestamp']).year
+        df_2['week_no'] = pd.DatetimeIndex(df_2['timestamp']).week
+        df_2['weekday_no'] = pd.DatetimeIndex(df_2['timestamp']).weekday
 
         # Shift Price
         df_2['close_price_shift'] = df_2['close_price'].shift(1)
         df_2['daily_return'] = (df_2['close_price'] / df_2['close_price_shift'])
 
         # Calculate Past Returns
-        for i in [1, 2, 3, 4, 5, 7]:
+        for i in [1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 60, 90, 120]:
             df_2[f'moving_{i}d_return'] = (df_2['daily_return']).rolling(window=i).apply(np.prod, raw=True)
 
         # Calculate min daily moves
@@ -114,7 +131,13 @@ def run_indicators(df
                     df_2[f'sma_{i}d_{y}d_ratio_shift'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(1)
                     df_2[f'sma_{i}d_{y}d_ratio_shift_2'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(2)
                     df_2[f'sma_{i}d_{y}d_ratio_shift_3'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(3)
-                    df_2[f'sma_{i}d_{y}d_ratio_coef_2d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio'].shift(1)) / 2
+                    df_2[f'sma_{i}d_{y}d_ratio_shift_5'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(5)
+                    df_2[f'sma_{i}d_{y}d_ratio_shift_10'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(10)
+                    df_2[f'sma_{i}d_{y}d_ratio_coef_2d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift']) / 2
+                    df_2[f'sma_{i}d_{y}d_ratio_coef_3d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_2']) / 2
+                    df_2[f'sma_{i}d_{y}d_ratio_coef_4d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_3']) / 2
+                    df_2[f'sma_{i}d_{y}d_ratio_coef_5d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_5']) / 2
+                    df_2[f'sma_{i}d_{y}d_ratio_coef_10d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_10']) / 2
                     df_2[f'sma_{i}d_{y}d_ratio_avg'] = df_2[f'sma_{i}d_{y}d_ratio'].rolling(window=200).mean()
                     df_2[f'sma_{i}d_{y}d_ratio_std'] = df_2[f'sma_{i}d_{y}d_ratio'].rolling(window=200).std()
                     for z, w in [(2,2), (1.5, 15), (1,1)]:
@@ -124,9 +147,9 @@ def run_indicators(df
                         df_2[f'sma_{i}d_{y}d_ratio_{w}std_down_diff'] =  df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_{w}std_down']
 
         # Get RSI
-        df_2['momentum_rsi'] = ta.momentum.RSIIndicator(close=df_2['close_price'], n=14).rsi()
-        df_2['momentum_rsi_low'] = ta.momentum.RSIIndicator(close=df_2['low_price'], n=14).rsi()
-        df_2['momentum_rsi_high'] = ta.momentum.RSIIndicator(close=df_2['high_price'], n=14).rsi()
+        df_2['momentum_rsi'] = ta.momentum.RSIIndicator(close=df_2['close_price'], n=28).rsi()
+        df_2['momentum_rsi_low'] = ta.momentum.RSIIndicator(close=df_2['low_price'], n=28).rsi()
+        df_2['momentum_rsi_high'] = ta.momentum.RSIIndicator(close=df_2['high_price'], n=28).rsi()
 
         for i in ['', '_low', '_high']:
             # Create bins of rsi and label them
@@ -139,10 +162,6 @@ def run_indicators(df
             df_2[f'rsi_bins_shift_{y}d'] = df_2['rsi_bins'].shift(y).fillna(0)
             df_2[f'rsi_bins_shift_{y}d_low'] = df_2['rsi_bins_low'].shift(y).fillna(0)
             df_2[f'rsi_bins_shift_{y}d_high'] = df_2['rsi_bins_high'].shift(y).fillna(0)
-
-        for i in [7, 14, 21, 28, 35, 70, 105, 140, 175, 210]:
-            # Get min rsi
-            df_2[f'rsi_{i}'] = df_2['momentum_rsi'].rolling(i).min()
 
         for i in [35, 70, 105, 140, 175, 210]:
             # Get rsi std
@@ -275,9 +294,31 @@ def run_indicators(df
         df_2['bb_bbl_diff_std'] = (df_2['close_price'] - df_2['bb_bbl']) / df_2['bb_std']
         df_2['bb_bbh_diff_std'] = (df_2['close_price'] - df_2['bb_bbh']) / df_2['bb_std']
 
+        # Add Bollinger Bands shift
+        for i in [1, 2, 3, 5, 10, 20, 30]:
+            df_2[f'bb_bbm_{i}'] = df_2['bb_bbm'].shift(i)
+            df_2[f'bb_bbh_{i}'] = df_2['bb_bbh'].shift(i)
+            df_2[f'bb_bbl_{i}'] = df_2['bb_bbl'].shift(i)
+
         # SMA
-        sma = ta.momentum.AwesomeOscillatorIndicator(high=df_2['high_price'], low=df_2['low_price'])
-        df_2['sma_oscillator'] = sma.ao()
+        #sma = ta.momentum.AwesomeOscillatorIndicator(high=df_2['high_price'], low=df_2['low_price'])
+        #df_2['sma_oscillator'] = sma.ao()
+
+        # ADX
+        adx = ta.trend.ADXIndicator(high=df_2['high_price'], low=df_2['low_price'], close=df_2['close_price'])
+        df_2['adx'] = adx.adx()
+        df_2['adx_neg'] = adx.adx_neg()
+        df_2['adx_pos'] = adx.adx_pos()
+
+        # Pivot Points
+        df_2['previous_week_high'] = df_2['high_price'].shift(5)
+        df_2['previous_week_low'] = df_2['low_price'].shift(5)
+        df_2['previous_week_close'] = df_2['close_price'].shift(5)
+        df_2['pivot_point'] = (df_2['previous_week_high'] + df_2['previous_week_low'] + df_2['previous_week_close']) / 3
+        df_2['support_one'] = (df_2['pivot_point'] * 2) - df_2['previous_week_high']
+        df_2['support_two'] = df_2['pivot_point'] - (df_2['previous_week_high'] - df_2['previous_week_low'])
+        df_2['resistance_one'] = (df_2['pivot_point'] * 2) - df_2['previous_week_low']
+        df_2['resistance_two'] = df_2['pivot_point'] + (df_2['previous_week_high'] - df_2['previous_week_low'])
 
         # Remove first 14 days
         df_2 = df_2.reset_index(drop=True)
@@ -287,14 +328,11 @@ def run_indicators(df
         # Future Returns
         future = df_2[['timestamp', 'close_price']]
         future['timestamp'] = pd.to_datetime(future['timestamp'])
-        future.sort_values(by=['timestamp'], ascending=False, inplace = True)
-        future['next_day_price'] = future['close_price'].shift(1)
-        future['next_day_return'] = (future['next_day_price'] / future['close_price'])
-        future['next_3d_return'] = (future['next_day_return']).rolling(window=3).apply(np.prod, raw=True)
-        future['next_5d_return'] = (future['next_day_return']).rolling(window=5).apply(np.prod, raw=True)
-        future['next_7d_return'] = (future['next_day_return']).rolling(window=7).apply(np.prod, raw=True)
-        future['next_14d_return'] = (future['next_day_return']).rolling(window=14).apply(np.prod, raw=True)
-        future['next_21d_return'] = (future['next_day_return']).rolling(window=21).apply(np.prod, raw=True)
+        future.sort_values(by=['timestamp'], ascending=True, inplace = True)
+
+        for i in [1, 3, 5, 7, 14, 21]:
+            future[f'next_{i}d_price'] = future['close_price'].shift(-i)
+            future[f'next_{i}d_return'] = (future[f'next_{i}d_price'] / future['close_price'])
 
         # Merge output with future returns
         df_2 = pd.merge(df_2, future, on='timestamp', how='left')
@@ -380,7 +418,7 @@ def main_indicators(all_prices, my_stocks_symbols, full_refresh=True):
 
         print('Exporting Indicators')
 
-        # Export indiciators
+        # Export indicators
         indicators_df['just_date'] = indicators_df['just_date'].astype(str)
         indicators_df.reset_index(drop=True).to_feather('../output/all_indicators.feather')
 
