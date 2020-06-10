@@ -7,7 +7,7 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '\
                          'Chrome/75.0.3770.80 Safari/537.36'}
 
 
-def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o=volume'):
+def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o=volume', csv_location='../docs/my_stocks.csv'):
     """
     Function to scrape symbols out of Finviz's website based on the URL that was given.
     The output is a list of symbols with company name and industry.
@@ -81,6 +81,6 @@ def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o
 
     # Data Frame
     df = pd.DataFrame(my_stocks, columns = ['symbol', 'description', 'industry', 'sector', 'market_cap'])
-    df.to_csv('../docs/my_stocks.csv', index=0)
+    df.to_csv(csv_location, index=0)
 
     return my_stocks

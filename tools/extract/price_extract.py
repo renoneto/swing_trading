@@ -92,7 +92,7 @@ def last_business_day():
 
     return most_recent_str
 
-def interval_start_date(min_max_prices, most_recent_str, full_refresh=False, manual_start='2017-01-01'):
+def interval_start_date(min_max_prices, most_recent_str, full_refresh=False, manual_start='2016-01-01'):
     """
     Calculates interval and start date based on today's date.
     It has the option of running a full refresh, which will update all prices.
@@ -206,10 +206,12 @@ def all_prices_full_refresh(prices_list, interval, my_stocks):
 
 def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/my_stocks.csv'):
 
-    print('Start Update Prices Process ...')
-
     # Get list of stocks
     my_stocks_symbols, my_stocks = stocks_pool(stocks_path = stocks_path)
+
+    print(str(len(my_stocks)) + ' stocks will be analyzed')
+    print('')
+    print('Start Update Prices Process ...')
 
     if do_not_refresh == True:
 
