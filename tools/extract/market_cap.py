@@ -33,14 +33,14 @@ def main_market_cap(pe_and_prices):
     pe_and_prices.drop(['market_cap_no', 'shs_outstanding'], inplace=True, axis=1)
 
     # Export
-    pe_and_prices.to_csv('../docs/pe_and_prices_market_cap.csv', index=0)
+    #pe_and_prices.to_csv('../docs/pe_and_prices_market_cap.csv', index=0)
 
     # Market Cap Analysis
     pe_and_prices = market_cap_analysis(pe_and_prices)
 
     # Weighted Returns
     #pe_and_prices = weighted_returns(pe_and_prices)
-    #pe_and_prices.to_csv('pe_prices_market_cap_analysis.csv', index=0)
+    pe_and_prices.to_csv('pe_prices_market_cap_analysis.csv', index=0)
 
     return pe_and_prices
 
