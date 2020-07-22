@@ -3,17 +3,17 @@ import time
 from os import path
 
 from extract.price_extract import main_prices
-from extract.zacks_extract import main_ratio
+from extract.fundamentals import main_fundamentals
 from extract.market_cap import main_market_cap
 from indicators.indicators import main_indicators
 from signals.create_signals import main_signals
+from indicators.benchmarks import benchmark_prices
 
 def main(full_refresh=False,
-        pe_full_refresh=False,
-        number_of_signals=5,
+        number_of_signals=7,
         skip_price=False,
         skip_indicators=False,
-        skip_ratios=False,
+        export_indicators=True,
         stocks_path='../docs/my_stocks.csv'):
 
     # Start Tracking Time
@@ -51,39 +51,15 @@ def main(full_refresh=False,
     start2 = time.time()
 
     """
-    PE/PB RATIO & MARKET CAP
+    RUN INDICATORS & BENCHMARKS
     """
-    print('Calculate PE/PB Ratios and Market Cap')
 
-    if skip_ratios == False:
-        if pe_full_refresh == False:
-            pe_and_prices = main_ratio(all_prices, 'pe_ratio', full_refresh=False)
-            pb_and_prices = main_ratio(pe_and_prices, 'price_to_book_value', full_refresh=False)
-        else:
-            print('Running Full Refresh of PE/PB Ratios')
-            pe_and_prices = main_ratio(all_prices, 'pe_ratio', full_refresh=True)
-            pb_and_prices = main_ratio(pe_and_prices, 'price_to_book_value', full_refresh=True)
-
-        # Calculate Market Cap and Calculate Weighted Returns
-        ratios_and_prices = main_market_cap(pb_and_prices)
-
-    else:
-        print('Skipping process. No refresh.')
-
-    # End Timer
-    end = time.time()
-    print('It took ' + str(int(end - start2)) + ' seconds to update PE/PB Ratios and Market Caps.')
-    print('')
-
-    # Start Tracking Time 2
-    start2 = time.time()
-    """
-    RUN INDICATORS
-    """
+    # Create Benchmark columns before metrics
+    benchmark_and_prices, benchmarks_columns = benchmark_prices(all_prices)
 
     if skip_indicators == False:
         # Create all indicators
-        indicators = main_indicators(ratios_and_prices, my_stocks_symbols, full_refresh=True)
+        indicators = main_indicators(benchmark_and_prices, my_stocks_symbols, benchmarks_columns, export=export_indicators)
     else:
 
         # Check if file exists
@@ -98,7 +74,7 @@ def main(full_refresh=False,
         else:
             print('Cannot skip indicators because file doesnt exist. Running Full Refresh.')
             # Create all indicators
-            indicators = main_indicators(ratios_and_prices, my_stocks_symbols, full_refresh=True)
+            indicators = main_indicators(benchmark_and_prices, my_stocks_symbols, benchmarks_columns, export=export_indicators)
 
     # End Timer
     end = time.time()
@@ -109,15 +85,29 @@ def main(full_refresh=False,
     start2 = time.time()
 
     """
+    UPDATE FUNDAMENTALS
+    """
+    print('Add Fundamentals')
+
+    fundamental_prices = main_fundamentals(all_prices, indicators)
+
+    # End Timer
+    end = time.time()
+    print('It took ' + str(int(end - start2) / 60) + ' minutes to update fundamentals.')
+    print('')
+
+    # Start Tracking Time 2
+    start2 = time.time()
+    """
     CREATE BUY/SELL SIGNALS
     """
 
     # Create Trades/Buy and Sell Signals
-    trades = main_signals(indicators, number_of_signals=number_of_signals)
+    trades = main_signals(fundamental_prices, number_of_signals=number_of_signals)
 
     # End Timer
     end = time.time()
-    print('It took ' + str(int(end - start2)) + ' seconds to generate Buy and Sell Signals')
+    print('It took ' + str(int(end - start2) / 60) + ' minutes to generate Buy and Sell Signals')
     print('')
     print('The whole process took ' + str(int(end - start) / 60) + ' minutes. Happy Trading! =)')
 
