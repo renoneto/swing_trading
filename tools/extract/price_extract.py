@@ -24,13 +24,16 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def stocks_pool(stocks_path='../docs/my_stocks.csv'):
+def stocks_pool(stocks_path='../docs/my_stocks.csv', benchmarks_path='../docs/benchmarks.csv'):
     """
-    Extract stocks from csv file
+    Extract stocks/benchmarks from csv file
     """
+    # Read csv with benchmarks
+    benchmarks_df = pd.read_csv(benchmarks_path, header=0)
 
     # Read csv with stocks
     my_stocks_df = pd.read_csv(stocks_path, header=0)
+    my_stocks_df = pd.concat([my_stocks_df, benchmarks_df])
     my_stocks = my_stocks_df.values.tolist()
 
     # Create list with symbols from finviz
@@ -51,8 +54,52 @@ def run_prices_list(stocks_list, results_list, start_date, interval):
     # Create instance with tickers
     tickers = Ticker(stocks_list)
 
-    # Run query
-    incremental_prices = tickers.history(start=start_date, interval=interval).reset_index()
+    # Run query and create instance with query
+    incremental_prices_query = tickers.history(start=start_date, interval=interval)
+
+    # Check result data types
+    # If it's a dataframe then all symbols in list are good
+    if isinstance(incremental_prices_query, pd.DataFrame):
+        # Reset Index to make the symbol index another column
+        incremental_prices = incremental_prices_query.reset_index()
+
+    # If it's not a dataframe, then some securities are not good and we need to exclude those
+    else:
+        # Check if symbol is valid
+        lst_of_symbols = incremental_prices_query.keys()
+        to_exclude = []
+
+        # Add symbol to remove to list
+        for symbol in lst_of_symbols:
+
+            # If result is dataframe, then we're good
+            if isinstance(incremental_prices_query[symbol], pd.DataFrame):
+                continue
+
+            # Otherwise, exclude the security
+            else:
+                to_exclude.append(symbol)
+
+        # Remove symbol from query
+        for i in to_exclude:
+            incremental_prices_query.pop(i)
+
+        # Create Dataframe
+        for idx, symbol in enumerate(incremental_prices_query.keys()):
+
+            # if it's the first element, then we need to create the dataframe
+            if idx == 0:
+                incremental_prices = incremental_prices_query[symbol].reset_index()
+                incremental_prices['symbol'] = symbol
+
+            # For the next securities, we need to append the results to the first one
+            else:
+                temp_df = incremental_prices_query[symbol].reset_index()
+                temp_df['symbol'] = symbol
+                incremental_prices = pd.concat([incremental_prices, temp_df])
+
+        # rename column
+        incremental_prices.rename(columns={'index':'date'}, inplace=True)
 
     # Append to results
     return results_list.append(incremental_prices)
@@ -219,6 +266,8 @@ def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/m
 
         # Read existing prices and return that
         all_prices = pd.read_csv('../docs/prices.csv')
+        all_prices['just_date'] = pd.to_datetime(all_prices['just_date'])
+        all_prices['just_date'] = all_prices['just_date'].dt.date
 
     else:
 

@@ -1,96 +1,57 @@
+from numpy.core.numeric import full
 import pandas as pd
-from bs4 import BeautifulSoup
-import requests
-from requests import Session
-from datetime import datetime, timedelta
-import time
+from yahoo_earnings_calendar import YahooEarningsCalendar
 
-headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '\
-                     'AppleWebKit/537.36 (KHTML, like Gecko) '\
-                     'Chrome/75.0.3770.80 Safari/537.36'}
-
-def extract_earnings(start_date='2015-01-01', future_days=60, threshold_days=20):
+def extract_earnings(stocks_path='../docs/my_stocks.csv', full_refresh=True):
     """
-    Function to Extract earnings dates from a website. It extracts all symbols.
-    start_date = Extracting starting in start_date
-    future_days = Extract until today + future_days
-
-    It will extract based on the max date found on the existing file, the threshold is set on the function
+    Function to extract earnings dates of stocks in csv file using Yahoo Finance
     """
 
-    # Read file
-    earnings_df = pd.read_csv('../docs/earnings.csv')
+    # Create instance of YahooFinance
+    yec = YahooEarningsCalendar()
 
-    # Calculate max date
-    earnings_df['earnings_date'] = pd.to_datetime(earnings_df['earnings_date'])
-    difference = earnings_df['earnings_date'].max() - datetime.today()
+    # Read stocks and create list with them
+    stocks = pd.read_csv(stocks_path)
+    symbols = list(stocks['symbol'].unique())
 
-    # See if difference is less than threshold
-    if difference.days <= 20:
+    if full_refresh == False:
+        # Read existing file with earnings data
+        earnings_file = pd.read_csv('../docs/earnings.csv')
 
-        # Define Session and Headers
-        s = Session()
-        s.headers.update(headers)
+        # Create list with symbols
+        existing_symbols = list(earnings_file['symbol'].unique())
 
-        # Create list to store results
-        earnings_dates = []
+        # If symbols exits, remove it from list
+        for symbol in existing_symbols:
+            if symbol in symbols:
+                symbols.remove(symbol)
 
-        # Define Start, End and Current Dates
-        current_date = datetime.today() + timedelta(days=future_days)
-        current_date_str = current_date.strftime("%Y-%m-%d")
+    # Calculate length
+    length = len(symbols)
 
-        # Do this while current date is greater or less than start_date
-        while current_date_str != start_date:
+    # Create empty list to store results
+    results = []
 
-            # Calculate current_date minus one day
-            current_date = current_date - timedelta(days=1)
-            current_date_str = current_date.strftime("%Y-%m-%d")
+    # for each symbol in list
+    for idx, symbol in enumerate(symbols):
+        # Get json_response with dates
+        try:
+            json_response = yec.get_earnings_of(symbol)
+            # for each element in json_response, extract the following
+            for element in json_response:
+                # Append results to list
+                results.append([element['ticker'], element['startdatetime'], element['epsestimate'], element['epsactual'], element['epssurprisepct']])
+            # Print completion
+            print(str(round(((idx+1)/length), 2) * 100) + '%')
+        except:
+            continue
 
-            # Create url to pull data
-            earnings_url_base = 'https://www.zacks.com/includes/classes/z2_class_calendarfunctions_data.php?calltype=eventscal&date='
-            earnings_timestamp = int(time.mktime(time.strptime((current_date_str + ' 00:00:00'), '%Y-%m-%d %H:%M:%S')))
-            earnings_url = earnings_url_base + str(earnings_timestamp)
+    if full_refresh == True:
+        # Create Dataframe and export
+        pd.DataFrame(results, columns = ['symbol', 'earnings_date', 'eps_estimate', 'eps_actual', 'eps_surprise']).to_csv('../docs/earnings.csv', index=0)
 
-            # Pull Data
-            earnings_response = s.get(earnings_url)
-            earnings_json = BeautifulSoup(earnings_response.text, 'html.parser')
-
-            # Create list comprehension
-            list_comp = [[a.text, current_date_str] for a in earnings_json.find_all('a') if a.text != '']
-            [earnings_dates.append(i) for i in list_comp]
-
-            print('Extracting ' + current_date_str + ' earnings.')
-
-        # Export information
-        earnings_df = pd.DataFrame(earnings_dates, columns = ['symbol', 'earnigs_date'])
-        earnings_df.to_csv('../docs/earnings.csv', index=0)
-
-    # If a refresh is not necessary then just read existing file
     else:
-        # Read file
-        earnings_df = pd.read_csv('../docs/earnings.csv')
+        # Concatenate with existing file
+        new_symbols = pd.DataFrame(results, columns = ['symbol', 'earnings_date', 'eps_estimate', 'eps_actual', 'eps_surprise'])
+        pd.concat([earnings_file, new_symbols]).to_csv('../docs/earnings.csv', index=0)
 
-    return earnings_df
-
-def add_earnings(trades):
-
-    # Create Earnings Dataframe
-    earnings_df = extract_earnings()
-
-    # Read Earnings
-    earnings_df['earnings_date_90d'] = pd.to_datetime(earnings_df['earnings_date']) - timedelta(days=90)
-
-    # Merge with trades and forward fill dates
-    trades = pd.merge(trades, earnings_df, how='left', left_on=['symbol', 'just_date'], right_on=['symbol', 'earnings_date_90d'])
-    trades['earnings_date'] = trades.groupby(['symbol']).ffill()['earnings_date']
-    trades['earnings_date'] = pd.to_datetime(trades['earnings_date'])
-
-    # Calculate difference between date and next earnings date
-    trades['earnings_difference'] = trades['just_date'] - trades['earnings_date']
-    trades['earnings_difference'] = trades['earnings_difference'].dt.days
-
-    # Add Previous day price column for Trailing Loss calculation
-    #trades['previous_day_price'] = trades.groupby(['symbol']).shift(1)['close_price_x']
-
-    # Drop Columns
-    trades.drop(columns=['earnings_date_90d', 'earnings_date'], inplace=True)
