@@ -35,13 +35,13 @@ def search_symbol(symbol):
 
     return stock_url
 
-def extract_all_urls(stocks_path='../docs/my_stocks.csv'):
+def extract_all_urls(stocks_path='../docs/my_stocks.feather'):
     """
     Create file with urls to call api
     """
 
     # Read csv with stocks
-    my_stocks_df = pd.read_csv(stocks_path, header=0)
+    my_stocks_df = pd.read_feather(stocks_path)
 
     # Create List with stocks
     my_stocks_list = list(my_stocks_df['symbol'].unique())
@@ -245,20 +245,13 @@ def update_fundamental_dates():
     # Create columns with previous Qs numbers
     # First we need to define the relevant columns
     relevant_columns = list(set(list(df_fund.columns)) - set(['date', 'symbol']))
+    relevant_columns = ['basic_eps_ttm', 'net_income_ttm', 'net_oper_cf_ttm', 'total_revenue_ttm']
 
     # Loop through columns and create a new column with previous numbers
     for column in relevant_columns:
-        if column not in ('basic_eps_ttm', 'net_income_ttm'):
-            for i in range(1,5):
-                number = i * -1
-                df_fund[f'{column}_{i}Q'] = df_fund.groupby('symbol')[column].shift(number)
-        else:
-            for i in range(1,5):
-                number = i * -1
-                df_fund[f'{column}_{i}Q'] = df_fund.groupby('symbol')[column].shift(number)
-            df_fund[f'{column}_8Q'] = df_fund.groupby('symbol')[column].shift(-8)
-            df_fund[f'{column}_12Q'] = df_fund.groupby('symbol')[column].shift(-12)
-            df_fund[f'{column}_16Q'] = df_fund.groupby('symbol')[column].shift(-16)
+        for i in range(1,17):
+            number = i * -1
+            df_fund[f'{column}_{i}Q'] = df_fund.groupby('symbol')[column].shift(number)
 
     # Now we need to pull data from earnings, because we need to tell exactly when all the data was available
     # Transform dataframes
@@ -277,8 +270,11 @@ def update_fundamental_dates():
     check = clean_df[(clean_df['difference'] >= 0)].groupby(['symbol','earnings_quarter']).min()['difference'].reset_index()
     final = pd.merge(clean_df, check, on=['symbol', 'earnings_quarter', 'difference'])
 
+    # Drop columns
+    final.drop('date', axis=1, inplace=True)
+
     # Export to csv
-    final.to_csv('../docs/my_stock_fundamentals_correct_dates.csv', index=0)
+    final.to_feather('../docs/my_stock_fundamentals_correct_dates.feather')
 
     return final
 
@@ -297,9 +293,11 @@ def update_prices(fundamentals, all_prices):
     merge_df = pd.merge(all_prices[['just_date', 'symbol', 'close_price', 'industry']], fundamentals, left_on=['just_date', 'symbol'], right_on=['earnings_date', 'symbol'], how='left')
 
     # EPS TTM Last 60, 120, 180, 240, 300
+    symbol_grouped = merge_df.groupby('symbol')
+
     for idx, i in enumerate([60, 120, 180, 240]):
         # Shift Columns - Calculate Past EPS TTM
-        merge_df[f'past_eps_ttm_{i}'] = merge_df.groupby('symbol')['basic_eps_ttm'].shift(i)
+        merge_df[f'past_eps_ttm_{i}'] = symbol_grouped['basic_eps_ttm'].shift(i)
 
     # Calculate Growth of EPS
     for idx, i in enumerate([60, 120, 180, 240]):
@@ -309,7 +307,6 @@ def update_prices(fundamentals, all_prices):
             if idx2 - idx == 1:
                 # Calculate Growth
                 merge_df[f'eps_ttm_difference_{i}_{y}'] = (merge_df[f'past_eps_ttm_{i}'] - merge_df[f'past_eps_ttm_{y}']) / merge_df[f'past_eps_ttm_{y}'].abs()
-
 
     # Figure out fields that matter
     columns_to_fill = merge_df.columns[merge_df.isna().any()].tolist()
@@ -339,32 +336,38 @@ def update_prices(fundamentals, all_prices):
     merge_df['earnings_growth_rate'] = 100 * (((merge_df['basic_eps_ttm'] / merge_df['basic_eps_ttm_16Q']) ** (1/4)) - 1)
     merge_df['peg_ratio'] = merge_df['pe_ratio'] / merge_df ['earnings_growth_rate']
 
-    # Moving Market Cap
+    # Price to Sales Ratio
     merge_df['sales_per_share'] = merge_df['total_revenue_ttm'] / merge_df['shs']
     merge_df['price_to_sales_ratio'] = merge_df['close_price'] / merge_df['sales_per_share']
 
+    # Calculate Market Cap
+    merge_df['market_cap_calc'] = merge_df['shs'] * merge_df['close_price']
+
     # Previous Values for Ratios
-    for idx, i in enumerate([60, 120, 180, 240]):
+    #for idx, i in enumerate([60, 120, 180, 240]):
 
         # List of Ratios
-        for ratio in ['pe_ratio', 'pb_ratio', 'debt_equity_ratio', 'peg_ratio', 'price_to_sales_ratio']:
+        #for ratio in ['pe_ratio', 'pb_ratio', 'debt_equity_ratio', 'peg_ratio', 'price_to_sales_ratio']:
 
             # Shift Columns - Calculate Past Ratios
-            merge_df[f'{ratio}_{i}'] = merge_df.groupby('symbol')[ratio].shift(i)
+            #merge_df[f'{ratio}_{i}'] = merge_df.groupby('symbol')[ratio].shift(i)
 
     # Drop close price column
     merge_df.drop('close_price', axis=1, inplace=True)
 
     # Add Industry Median Value
-    industry_df = merge_df.groupby(['just_date', 'industry']).median()[['pe_ratio', 'pb_ratio', 'debt_equity_ratio', 'peg_ratio', 'price_to_sales_ratio']]
-    industry_df = industry_df.reset_index()
-    industry_df.columns = ['just_date', 'industry', 'pe_ratio_industry', 'pb_ratio_industry', 'debt_equity_ratio_industry', 'peg_ratio_industry', 'price_to_sales_ratio_industry']
+    #industry_df = merge_df.groupby(['just_date', 'industry']).median()[['pe_ratio', 'pb_ratio', 'debt_equity_ratio', 'peg_ratio', 'price_to_sales_ratio']]
+    #industry_df = industry_df.reset_index()
+    #industry_df.columns = ['just_date', 'industry', 'pe_ratio_industry', 'pb_ratio_industry', 'debt_equity_ratio_industry', 'peg_ratio_industry', 'price_to_sales_ratio_industry']
 
     # Merge that with merge_df
-    merge_df = pd.merge(merge_df, industry_df, on=['just_date', 'industry'], how='left')
+    #merge_df = pd.merge(merge_df, industry_df, on=['just_date', 'industry'], how='left')
 
     # Drop industry column
     merge_df.drop('industry', axis=1, inplace=True)
+
+    # Export
+    #merge_df.to_csv('../docs/fundamental_prices.csv', index=0)
 
     return merge_df
 
@@ -373,8 +376,8 @@ def main_fundamentals(all_prices, indicators):
     Main function to update Fundamental data according to earnings date releases
     """
 
-    # Create fundamentals dataframe
-    fundamentals = update_fundamental_dates()
+    # Create fundamentals_dataframe
+    fundamentals = pd.read_feather('../docs/my_stock_fundamentals_correct_dates.feather')
 
     # Merge fundemantals with all prices
     fundamentals_prices = update_prices(fundamentals, all_prices)
@@ -387,6 +390,4 @@ def main_fundamentals(all_prices, indicators):
     indicators_fundamentals = pd.merge(indicators, fundamentals_prices, on=['just_date', 'symbol'], how='left')
 
     return indicators_fundamentals
-
-
 
