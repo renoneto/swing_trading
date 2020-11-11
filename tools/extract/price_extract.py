@@ -24,15 +24,20 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-def stocks_pool(stocks_path='../docs/my_stocks.csv', benchmarks_path='../docs/benchmarks.csv'):
+def stocks_pool(stocks_path='../docs/my_stocks.feather', benchmarks_path='../docs/benchmarks.csv'):
     """
     Extract stocks/benchmarks from csv file
     """
     # Read csv with benchmarks
-    benchmarks_df = pd.read_csv(benchmarks_path, header=0)
+    benchmarks_df = pd.read_csv(benchmarks_path)
 
-    # Read csv with stocks
-    my_stocks_df = pd.read_csv(stocks_path, header=0)
+    # Read stocks file
+    if stocks_path[-7:] == 'feather':
+        my_stocks_df = pd.read_feather(stocks_path)
+    elif stocks_path[-3:] == 'csv':
+        my_stocks_df = pd.read_csv(stocks_path, header=0)
+
+    # Concatenate it with benchmarks
     my_stocks_df = pd.concat([my_stocks_df, benchmarks_df])
     my_stocks = my_stocks_df.values.tolist()
 
@@ -41,7 +46,7 @@ def stocks_pool(stocks_path='../docs/my_stocks.csv', benchmarks_path='../docs/be
 
     # Break stocks in chunks so we can run prices and indicators in parallel
     my_stocks_symbols = []
-    lenght = int(len(my_stocks) / 16)
+    lenght = int(len(my_stocks) / 25)
     lists = chunks(symbols_only, lenght)
     my_stocks_symbols = [i for i in lists]
 
@@ -110,7 +115,7 @@ def prices_current_status():
     """
 
     # Import all Prices
-    current_prices = pd.read_csv('../docs/prices.csv', header = 0, parse_dates=['timestamp', 'just_date'])
+    current_prices = pd.read_feather('../docs/prices.feather') #, header = 0, parse_dates=['timestamp', 'just_date'])
 
     # Create min and max dates per symbol
     max_date = current_prices.groupby('symbol').max()['just_date'].reset_index()
@@ -147,7 +152,7 @@ def interval_start_date(min_max_prices, most_recent_str, full_refresh=False, man
     # Chance to run a full_refresh
     if full_refresh == False:
 
-        print('Running Incremental Refresh')
+        print('Running Price Incremental Refresh')
 
         # Define Interval and start_date
         start_date = min_max_prices['just_date_max'].min()
@@ -162,7 +167,7 @@ def interval_start_date(min_max_prices, most_recent_str, full_refresh=False, man
 
     # If running full_refresh
     else:
-        print('Running Full Refresh')
+        print('Running Price Full Refresh')
         start_date = manual_start
         interval = '1d'
 
@@ -217,7 +222,7 @@ def all_prices_incremental(prices_list, interval, my_stocks, current_prices, sta
 
     # Reset Index
     all_prices = all_prices.reset_index(drop=True)
-    all_prices.to_csv('../docs/prices.csv', index=0)
+    all_prices.to_feather('../docs/prices.feather')
 
     return all_prices
 
@@ -246,26 +251,25 @@ def all_prices_full_refresh(prices_list, interval, my_stocks):
     #all_prices['just_date'] = all_prices['just_date'].astype(str)
 
     # Reset Index
-    all_prices = all_prices.reset_index(drop=True)
-    all_prices.to_csv('../docs/prices.csv', index=0)
+    all_prices = all_prices.reset_index(drop=True).drop_duplicates(subset=['symbol', 'just_date'], keep='last').reset_index(drop=True)
+    all_prices.to_feather('../docs/prices.feather')#, index=0)
 
     return all_prices
 
-def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/my_stocks.csv'):
+def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/my_stocks.feather'):
 
     # Get list of stocks
     my_stocks_symbols, my_stocks = stocks_pool(stocks_path = stocks_path)
 
     print(str(len(my_stocks)) + ' stocks will be analyzed')
     print('')
-    print('Start Update Prices Process ...')
 
     if do_not_refresh == True:
 
         print('Using existing prices. No refresh.')
 
         # Read existing prices and return that
-        all_prices = pd.read_csv('../docs/prices.csv')
+        all_prices = pd.read_feather('../docs/prices.feather')
         all_prices['just_date'] = pd.to_datetime(all_prices['just_date'])
         all_prices['just_date'] = all_prices['just_date'].dt.date
 
@@ -274,7 +278,7 @@ def main_prices(full_refresh=False, do_not_refresh=False, stocks_path='../docs/m
         if full_refresh == False:
 
             # Check if file exists before, otherwise, we need to run a full refresh
-            if path.exists('../docs/prices.csv') == False:
+            if path.exists('../docs/price.feather') == False:
 
                 print('Prices File not found. Running a full refresh.')
 
