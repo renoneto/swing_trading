@@ -7,12 +7,11 @@ HEADERS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) '\
                          'Chrome/75.0.3770.80 Safari/537.36'}
 
 
-def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o=volume', csv_location='../docs/my_stocks.csv'):
+def finviz_pull(stocks_table, url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o=volume'):
     """
     Function to scrape symbols out of Finviz's website based on the URL that was given.
     The output is a list of symbols with company name and industry.
     """
-
     # Create Session
     s = Session()
 
@@ -75,12 +74,11 @@ def finviz_pull(url='https://finviz.com/screener.ashx?v=111&f=cap_midover&ft=4&o
             print(f"Total of {stocks_imported} stocks imported")
             print('Done loading')
 
-        else:
-            print(f"{stocks_imported} stocks imported")
-            page += 20
+        # Add 20 to page number, to go to next page. Each page contains 20 stocks.
+        page += 20
 
     # Data Frame
     df = pd.DataFrame(my_stocks, columns = ['symbol', 'description', 'industry', 'sector', 'market_cap'])
-    df.to_csv(csv_location, index=0)
 
-    return my_stocks
+    # Move it to the database
+    stocks_table.load_data(df, id_columns=['symbol'], is_replace=True)

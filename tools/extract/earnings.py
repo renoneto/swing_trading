@@ -1,6 +1,8 @@
-from numpy.core.numeric import full
 import pandas as pd
-from yahoo_earnings_calendar import YahooEarningsCalendar
+from yahooquery import Ticker
+
+def upcoming_earnings(stocks_table, earnings_table):
+
 
 def extract_earnings(stocks_path='../docs/my_stocks.csv', full_refresh=True):
     """

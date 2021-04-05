@@ -1,388 +1,372 @@
-from datetime import datetime as dt, timedelta
-import multiprocessing.dummy as mp
-from multiprocessing import Pool, Manager, cpu_count
+from multiprocessing import Pool, cpu_count, Manager
 import warnings
-import time
-import os.path
-from os import path
-
-from statistics import median, mean, stdev
 
 import numpy as np
 import pandas as pd
 import ta
 
+from support.custom_functions import chunks
+
 warnings.filterwarnings('ignore')
 
-def run_indicators(df
-                   , results_list
-                   , symbol
-                   , benchmark_columns
-                   , NaN = np.nan
-                   , min_max_rows = [5, 10, 15, 20, 25, 30, 60, 90, 120]):
+def run_indicators(price_df, symbol):
     """
     Create all indicators based on prices.
     This function takes a dataframe with prices, a symbol and a list to store the results.
     """
-
     # RSI Bins
     bins = list(range(0,101,10))
     labels = list(range(10))
 
     # Add ta features filling NaN values
-    df_2 = df[df['symbol'] == symbol]
+    indicators_df = price_df[price_df['symbol'] == symbol]
 
     # Create empty_df
-    empty_df = df_2.copy()
-    empty_df['momentum_rsi'] = 0
-    empty_df['index'] = 0
+    empty_df = price_df.copy()
     empty_df = empty_df[empty_df['symbol'] == 'Nothing Here']
 
     # Check for number of days
-    length = len(df_2)
+    length = len(indicators_df)
 
     if length > 14:
         # Close price shift
-        #df_2['close_price_shift'] = df_2['close_price'].shift(-1)
+        #indicators_df['close_shift'] = indicators_df['close'].shift(-1)
 
          # Shift prices one day
-        #df_2[['high_previous', 'low_previous', 'close_previous', 'open_previous']] = df_2[['high_price', 'low_price', 'close_price', 'open_price']].shift(1)
+        #indicators_df[['high_previous', 'low_previous', 'close_previous', 'open_previous']] = indicators_df[['high', 'low', 'close', 'open']].shift(1)
 
         # Support and Resistance Prices
         #for row in min_max_rows:
             # Calculations
-        #    df_2[f'low_min_d{row}'] = df_2['low_price'].rolling(row).min()
-        #    df_2[f'low_min_d{row}_shift1_{row}'] = df_2[f'low_min_d{row}'].shift(row)
-        #    df_2[f'high_max_d{row}'] = df_2['high_price'].rolling(row).max()
-        #    df_2[f'high_max_d{row}_shift1_{row}'] = df_2[f'high_max_d{row}'].shift(row)
-        #    df_2[f'close_min_d{row}'] = df_2['close_price'].rolling(row).min()
-        #    df_2[f'open_min_d{row}'] = df_2['open_price'].rolling(row).min()
-        #    df_2[f'close_max_d{row}'] = df_2['close_price'].rolling(row).max()
-        #    df_2[f'open_max_d{row}'] = df_2['open_price'].rolling(row).max()
+        #    indicators_df[f'low_min_d{row}'] = indicators_df['low'].rolling(row).min()
+        #    indicators_df[f'low_min_d{row}_shift1_{row}'] = indicators_df[f'low_min_d{row}'].shift(row)
+        #    indicators_df[f'high_max_d{row}'] = indicators_df['high'].rolling(row).max()
+        #    indicators_df[f'high_max_d{row}_shift1_{row}'] = indicators_df[f'high_max_d{row}'].shift(row)
+        #    indicators_df[f'close_min_d{row}'] = indicators_df['close'].rolling(row).min()
+        #    indicators_df[f'open_min_d{row}'] = indicators_df['open'].rolling(row).min()
+        #    indicators_df[f'close_max_d{row}'] = indicators_df['close'].rolling(row).max()
+        #    indicators_df[f'open_max_d{row}'] = indicators_df['open'].rolling(row).max()
 
         # Average Volume
-        df_2['avg_volume'] = df_2['volume'].rolling(90).mean()
+        indicators_df['avg_volume'] = indicators_df['volume'].rolling(90).mean()
 
-        # Year and Week No from timestamp
-        #df_2['year'] = pd.DatetimeIndex(df_2['timestamp']).year
-        #df_2['week_no'] = pd.DatetimeIndex(df_2['timestamp']).week
-        #df_2['weekday_no'] = pd.DatetimeIndex(df_2['timestamp']).weekday
+        # Year and Week No from date
+        #indicators_df['year'] = pd.DatetimeIndex(indicators_df['date']).year
+        #indicators_df['week_no'] = pd.DatetimeIndex(indicators_df['date']).week
+        #indicators_df['weekday_no'] = pd.DatetimeIndex(indicators_df['date']).weekday
 
         # Shift Price
         for i in [1]: #, 2, 3]:
-            df_2[f'close_price_shift_{i}d'] = df_2['close_price'].shift(i)
-            df_2[f'high_price_shift_{i}d'] = df_2['high_price'].shift(i)
-            df_2[f'low_price_shift_{i}d'] = df_2['low_price'].shift(i)
-            df_2[f'open_price_shift_{i}d'] = df_2['open_price'].shift(i)
+            indicators_df[f'close_shift_{i}d'] = indicators_df['close'].shift(i)
+            indicators_df[f'high_shift_{i}d'] = indicators_df['high'].shift(i)
+            indicators_df[f'low_shift_{i}d'] = indicators_df['low'].shift(i)
+            indicators_df[f'open_shift_{i}d'] = indicators_df['open'].shift(i)
 
         # Daily return
-        df_2['daily_return'] = (df_2['close_price'] / df_2['close_price_shift_1d'])
+        indicators_df['daily_return'] = (indicators_df['close'] / indicators_df['close_shift_1d'])
 
         # Calculate Past Returns
         for i in [1, 2, 3, 4, 5]: #, 7, 10, 15, 20, 30, 60, 90, 120]:
-            df_2[f'moving_{i}d_return'] = (df_2['daily_return']).rolling(window=i).apply(np.prod, raw=True)
+            indicators_df[f'moving_{i}d_return'] = (indicators_df['daily_return']).rolling(window=i).apply(np.prod, raw=True)
 
         # Calculate min daily moves
         #for i in [30, 60, 90]:
-        #    df_2[f'moving_{i}d_return_mean'] = df_2['daily_return'].rolling(window=i).mean()
-        #    df_2[f'moving_{i}d_return_std'] = df_2['daily_return'].rolling(window=i).std()
-        #    df_2[f'moving_{i}d_min_return'] = df_2[f'moving_{i}d_return_mean'] - (2 * df_2[f'moving_{i}d_return_mean'])
+        #    indicators_df[f'moving_{i}d_return_mean'] = indicators_df['daily_return'].rolling(window=i).mean()
+        #    indicators_df[f'moving_{i}d_return_std'] = indicators_df['daily_return'].rolling(window=i).std()
+        #    indicators_df[f'moving_{i}d_min_return'] = indicators_df[f'moving_{i}d_return_mean'] - (2 * indicators_df[f'moving_{i}d_return_mean'])
 
         # Simple Moving Average and Stationary Moving Average
         for i in [10, 20, 50, 100, 200]:
-
-            df_2[f'sma_{i}d'] = df_2['close_price'].rolling(window=i).mean()
-            df_2[f'sma_{i}d_shift'] = df_2[f'sma_{i}d'].shift(1)
-            #df_2[f'sma_{i}d_coef'] = (-df_2[f'sma_{i}d'].shift(i) + df_2[f'sma_{i}d']) / 2
-            #df_2[f'sma_{i}d_std'] = df_2['close_price'].rolling(window=i).std()
-            #df_2[f'stationary_sma_{i}d'] = df_2['close_price'] - df_2[f'sma_{i}d']
-            #df_2[f'stationary_sma_{i}d_zscore'] = df_2[f'stationary_sma_{i}d'] / df_2[f'sma_{i}d_std']
-            #df_2[f'stationary_sma_{i}d_zscore_shift'] = df_2[f'stationary_sma_{i}d_zscore'].shift(5)
-            #df_2[f'stationary_sma_{i}d_zscore_shift_2'] = df_2[f'stationary_sma_{i}d_zscore'].shift(10)
-            #df_2[f'stationary_sma_{i}d_zscore_min'] = df_2[f'stationary_sma_{i}d_zscore'].rolling(window=i).min()
-            #df_2[f'stationary_sma_{i}d_zscore_max'] = df_2[f'stationary_sma_{i}d_zscore'].rolling(window=i).max()
+            indicators_df[f'sma_{i}d'] = indicators_df['close'].rolling(window=i).mean()
+            indicators_df[f'sma_{i}d_shift'] = indicators_df[f'sma_{i}d'].shift(1)
+            #indicators_df[f'sma_{i}d_coef'] = (-indicators_df[f'sma_{i}d'].shift(i) + indicators_df[f'sma_{i}d']) / 2
+            #indicators_df[f'sma_{i}d_std'] = indicators_df['close'].rolling(window=i).std()
+            #indicators_df[f'stationary_sma_{i}d'] = indicators_df['close'] - indicators_df[f'sma_{i}d']
+            #indicators_df[f'stationary_sma_{i}d_zscore'] = indicators_df[f'stationary_sma_{i}d'] / indicators_df[f'sma_{i}d_std']
+            #indicators_df[f'stationary_sma_{i}d_zscore_shift'] = indicators_df[f'stationary_sma_{i}d_zscore'].shift(5)
+            #indicators_df[f'stationary_sma_{i}d_zscore_shift_2'] = indicators_df[f'stationary_sma_{i}d_zscore'].shift(10)
+            #indicators_df[f'stationary_sma_{i}d_zscore_min'] = indicators_df[f'stationary_sma_{i}d_zscore'].rolling(window=i).min()
+            #indicators_df[f'stationary_sma_{i}d_zscore_max'] = indicators_df[f'stationary_sma_{i}d_zscore'].rolling(window=i).max()
 
         #for i in [10, 20, 100, 200]:
 
         #    y = int(i/2)
         #    y2 = int(1.5 * i)
 
-        #    df_2[f'stationary_sma_{i}d_zscore_min_shift_1'] = df_2[f'stationary_sma_{i}d_zscore_min'].shift(y)
-        #    df_2[f'stationary_sma_{i}d_zscore_min_shift_2'] = df_2[f'stationary_sma_{i}d_zscore_min'].shift(i)
-        #    df_2[f'stationary_sma_{i}d_zscore_min_shift_3'] = df_2[f'stationary_sma_{i}d_zscore_min'].shift(y2)
-        #    df_2[f'stationary_sma_{i}d_zscore_min_all'] = df_2[[f'stationary_sma_{i}d_zscore_min_shift_1', f'stationary_sma_{i}d_zscore_min_shift_2', f'stationary_sma_{i}d_zscore_min_shift_3']].min(axis=1)
-        #    df_2[f'stationary_sma_{i}d_zscore_min_all_shift'] = df_2[f'stationary_sma_{i}d_zscore_min_all'].shift(5)
-        #    df_2[f'stationary_sma_{i}d_zscore_min_all_shift_2'] = df_2[f'stationary_sma_{i}d_zscore_min_all'].shift(10)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_shift_1'] = indicators_df[f'stationary_sma_{i}d_zscore_min'].shift(y)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_shift_2'] = indicators_df[f'stationary_sma_{i}d_zscore_min'].shift(i)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_shift_3'] = indicators_df[f'stationary_sma_{i}d_zscore_min'].shift(y2)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_all'] = indicators_df[[f'stationary_sma_{i}d_zscore_min_shift_1', f'stationary_sma_{i}d_zscore_min_shift_2', f'stationary_sma_{i}d_zscore_min_shift_3']].min(axis=1)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_all_shift'] = indicators_df[f'stationary_sma_{i}d_zscore_min_all'].shift(5)
+        #    indicators_df[f'stationary_sma_{i}d_zscore_min_all_shift_2'] = indicators_df[f'stationary_sma_{i}d_zscore_min_all'].shift(10)
 
         for i in [10, 20, 50, 100, 200]:
             for y in [20, 50, 100, 200]:
                 if i < y:
-                    df_2[f'sma_{i}d_{y}d_ratio'] = df_2[f'sma_{i}d'] / df_2[f'sma_{y}d']
-                    df_2[f'sma_{i}d_{y}d_ratio_shift'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(1)
-                    df_2[f'sma_{i}d_{y}d_ratio_shift_2'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(2)
-                    df_2[f'sma_{i}d_{y}d_ratio_shift_3'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(3)
-                    df_2[f'sma_{i}d_{y}d_ratio_shift_5'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(5)
-                    df_2[f'sma_{i}d_{y}d_ratio_shift_10'] = df_2[f'sma_{i}d_{y}d_ratio'].shift(10)
-                    df_2[f'sma_{i}d_{y}d_ratio_coef_2d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift']) / 2
-                    #df_2[f'sma_{i}d_{y}d_ratio_coef_3d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_2']) / 2
-                    #df_2[f'sma_{i}d_{y}d_ratio_coef_4d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_3']) / 2
-                    #df_2[f'sma_{i}d_{y}d_ratio_coef_5d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_5']) / 2
-                    #df_2[f'sma_{i}d_{y}d_ratio_coef_10d'] = (df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_shift_10']) / 2
-                    #df_2[f'sma_{i}d_{y}d_ratio_avg'] = df_2[f'sma_{i}d_{y}d_ratio'].rolling(window=200).mean()
-                    #df_2[f'sma_{i}d_{y}d_ratio_std'] = df_2[f'sma_{i}d_{y}d_ratio'].rolling(window=200).std()
+                    indicators_df[f'sma_{i}d_{y}d_ratio'] = indicators_df[f'sma_{i}d'] / indicators_df[f'sma_{y}d']
+                    indicators_df[f'sma_{i}d_{y}d_ratio_shift'] = indicators_df[f'sma_{i}d_{y}d_ratio'].shift(1)
+                    indicators_df[f'sma_{i}d_{y}d_ratio_shift_2'] = indicators_df[f'sma_{i}d_{y}d_ratio'].shift(2)
+                    indicators_df[f'sma_{i}d_{y}d_ratio_shift_3'] = indicators_df[f'sma_{i}d_{y}d_ratio'].shift(3)
+                    indicators_df[f'sma_{i}d_{y}d_ratio_shift_5'] = indicators_df[f'sma_{i}d_{y}d_ratio'].shift(5)
+                    indicators_df[f'sma_{i}d_{y}d_ratio_shift_10'] = indicators_df[f'sma_{i}d_{y}d_ratio'].shift(10)
+                    indicators_df[f'sma_{i}d_{y}d_ratio_coef_2d'] = (indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_shift']) / 2
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_coef_3d'] = (indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_shift_2']) / 2
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_coef_4d'] = (indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_shift_3']) / 2
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_coef_5d'] = (indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_shift_5']) / 2
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_coef_10d'] = (indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_shift_10']) / 2
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_avg'] = indicators_df[f'sma_{i}d_{y}d_ratio'].rolling(window=200).mean()
+                    #indicators_df[f'sma_{i}d_{y}d_ratio_std'] = indicators_df[f'sma_{i}d_{y}d_ratio'].rolling(window=200).std()
                     #for z, w in [(2,2), (1.5, 15), (1,1), (0.5, 'half')]:
-                    #    df_2[f'sma_{i}d_{y}d_ratio_{w}std_up'] = df_2[f'sma_{i}d_{y}d_ratio_avg'] + (z * df_2[f'sma_{i}d_{y}d_ratio_std'])
-                    #    df_2[f'sma_{i}d_{y}d_ratio_{w}std_down'] = df_2[f'sma_{i}d_{y}d_ratio_avg'] - (z * df_2[f'sma_{i}d_{y}d_ratio_std'])
-                    #    df_2[f'sma_{i}d_{y}d_ratio_{w}std_up_diff'] = df_2[f'sma_{i}d_{y}d_ratio_{w}std_up'] - df_2[f'sma_{i}d_{y}d_ratio']
-                    #    df_2[f'sma_{i}d_{y}d_ratio_{w}std_down_diff'] =  df_2[f'sma_{i}d_{y}d_ratio'] - df_2[f'sma_{i}d_{y}d_ratio_{w}std_down']
+                    #    indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_up'] = indicators_df[f'sma_{i}d_{y}d_ratio_avg'] + (z * indicators_df[f'sma_{i}d_{y}d_ratio_std'])
+                    #    indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_down'] = indicators_df[f'sma_{i}d_{y}d_ratio_avg'] - (z * indicators_df[f'sma_{i}d_{y}d_ratio_std'])
+                    #    indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_up_diff'] = indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_up'] - indicators_df[f'sma_{i}d_{y}d_ratio']
+                    #    indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_down_diff'] =  indicators_df[f'sma_{i}d_{y}d_ratio'] - indicators_df[f'sma_{i}d_{y}d_ratio_{w}std_down']
 
         # Get RSI
-        df_2['momentum_rsi'] = ta.momentum.RSIIndicator(close=df_2['close_price'], n=14).rsi()
-        #df_2['momentum_rsi_low'] = ta.momentum.RSIIndicator(close=df_2['low_price'], n=14).rsi()
-        #df_2['momentum_rsi_high'] = ta.momentum.RSIIndicator(close=df_2['high_price'], n=14).rsi()
+        indicators_df['momentum_rsi'] = ta.momentum.RSIIndicator(close=indicators_df['close'], window=14).rsi()
+        #indicators_df['momentum_rsi_low'] = ta.momentum.RSIIndicator(close=indicators_df['low'], window=14).rsi()
+        #indicators_df['momentum_rsi_high'] = ta.momentum.RSIIndicator(close=indicators_df['high'], window=14).rsi()
 
         for i in [''] : #, '_low', '_high']:
             # Create bins of rsi and label them
-            #df_2[f'rsi_bins{i}'] = pd.cut(df_2[f'momentum_rsi{i}'], bins=bins, labels=labels)
-            #df_2[f'rsi_bins{i}'] = pd.to_numeric(df_2[f'rsi_bins{i}'], errors='coerce')
-            df_2[f'rsi_bins{i}'] = pd.to_numeric(df_2[f'momentum_rsi{i}'], errors='coerce')
+            #indicators_df[f'rsi_bins{i}'] = pd.cut(indicators_df[f'momentum_rsi{i}'], bins=bins, labels=labels)
+            #indicators_df[f'rsi_bins{i}'] = pd.to_numeric(indicators_df[f'rsi_bins{i}'], errors='coerce')
+            indicators_df[f'rsi_bins{i}'] = pd.to_numeric(indicators_df[f'momentum_rsi{i}'], errors='coerce')
 
         for y in [1, 2, 3]:
             # Create a shift of the bin, to compare current with the previous
-            df_2[f'rsi_bins_shift_{y}d'] = df_2['rsi_bins'].shift(y).fillna(0)
-            #df_2[f'rsi_bins_shift_{y}d_low'] = df_2['rsi_bins_low'].shift(y).fillna(0)
-            #df_2[f'rsi_bins_shift_{y}d_high'] = df_2['rsi_bins_high'].shift(y).fillna(0)
+            indicators_df[f'rsi_bins_shift_{y}d'] = indicators_df['rsi_bins'].shift(y).fillna(0)
+            #indicators_df[f'rsi_bins_shift_{y}d_low'] = indicators_df['rsi_bins_low'].shift(y).fillna(0)
+            #indicators_df[f'rsi_bins_shift_{y}d_high'] = indicators_df['rsi_bins_high'].shift(y).fillna(0)
 
         #for i in [35, 70, 105, 140, 175, 210]:
             # Get rsi std
-        #    df_2[f'rsi_std_{i}'] = df_2['rsi_bins'].rolling(i).std()
+        #    indicators_df[f'rsi_std_{i}'] = indicators_df['rsi_bins'].rolling(i).std()
 
             # Get min rsi
-        #    df_2[f'rsi_{i}_min_bin'] = df_2['rsi_bins'].rolling(i).min()
-        #    df_2[f'rsi_{i}_min_bin_low'] = df_2['rsi_bins_low'].rolling(i).min()
-        #    df_2[f'rsi_{i}_min_bin_high'] = df_2['rsi_bins_high'].rolling(i).min()
+        #    indicators_df[f'rsi_{i}_min_bin'] = indicators_df['rsi_bins'].rolling(i).min()
+        #    indicators_df[f'rsi_{i}_min_bin_low'] = indicators_df['rsi_bins_low'].rolling(i).min()
+        #    indicators_df[f'rsi_{i}_min_bin_high'] = indicators_df['rsi_bins_high'].rolling(i).min()
 
         #for i in ['', '_low', '_high']:
             # Get Min rsi shift
-        #    df_2[f'rsi_35_min_bin_shift_1d{i}'] = df_2[f'rsi_35_min_bin{i}'].shift(1)
-        #    df_2[f'rsi_35_min_bin_shift_2d{i}'] = df_2[f'rsi_35_min_bin{i}'].shift(2)
+        #    indicators_df[f'rsi_35_min_bin_shift_1d{i}'] = indicators_df[f'rsi_35_min_bin{i}'].shift(1)
+        #    indicators_df[f'rsi_35_min_bin_shift_2d{i}'] = indicators_df[f'rsi_35_min_bin{i}'].shift(2)
 
         # Get shifted min rsi
         #for i in ['', '_low', '_high']:
-        #    df_2[f'rsi_35_min_bin_shifted_1{i}'] = df_2[f'rsi_35_min_bin{i}'].shift(35)
-        #    df_2[f'rsi_35_min_bin_shifted_2{i}'] = df_2[f'rsi_35_min_bin{i}'].shift(70)
-        #    df_2[f'rsi_35_min_bin_shifted_3{i}'] = df_2[f'rsi_35_min_bin{i}'].shift(105)
+        #    indicators_df[f'rsi_35_min_bin_shifted_1{i}'] = indicators_df[f'rsi_35_min_bin{i}'].shift(35)
+        #    indicators_df[f'rsi_35_min_bin_shifted_2{i}'] = indicators_df[f'rsi_35_min_bin{i}'].shift(70)
+        #    indicators_df[f'rsi_35_min_bin_shifted_3{i}'] = indicators_df[f'rsi_35_min_bin{i}'].shift(105)
 
-        #df_2['rsi_70_min_bin_shifted_1'] = df_2['rsi_70_min_bin'].shift(70)
-        #df_2['rsi_70_min_bin_shifted_2'] = df_2['rsi_70_min_bin'].shift(140)
-        #df_2['rsi_70_min_bin_shifted_3'] = df_2['rsi_70_min_bin'].shift(210)
+        #indicators_df['rsi_70_min_bin_shifted_1'] = indicators_df['rsi_70_min_bin'].shift(70)
+        #indicators_df['rsi_70_min_bin_shifted_2'] = indicators_df['rsi_70_min_bin'].shift(140)
+        #indicators_df['rsi_70_min_bin_shifted_3'] = indicators_df['rsi_70_min_bin'].shift(210)
 
         # Moving Average RSI
         #for i in [3, 5, 10, 20, 30, 50, 100]:
-        #    df_2[f'rsi_sma_{i}'] = df_2['rsi_bins'].rolling(i).mean()
+        #    indicators_df[f'rsi_sma_{i}'] = indicators_df['rsi_bins'].rolling(i).mean()
 
         # Get max rsi
         for i in [35]: #, 70, 105, 140, 175, 210]:
-            df_2[f'rsi_{i}_max_bin'] = df_2['rsi_bins'].rolling(i).max()
-            #df_2[f'rsi_{i}_max_bin_high'] = df_2['rsi_bins_high'].rolling(i).max()
+            indicators_df[f'rsi_{i}_max_bin'] = indicators_df['rsi_bins'].rolling(i).max()
+            #indicators_df[f'rsi_{i}_max_bin_high'] = indicators_df['rsi_bins_high'].rolling(i).max()
 
         # Median min rsi
-        #df_2['rsi_median_min_2'] = (df_2['rsi_35_min_bin'] + df_2['rsi_70_min_bin']) / 2
-        #df_2['rsi_median_min_4'] = (df_2['rsi_35_min_bin'] + df_2['rsi_70_min_bin'] +
-        #                             df_2['rsi_105_min_bin'] + df_2['rsi_140_min_bin']) / 4
-        #df_2['rsi_median_min_6'] = (df_2['rsi_35_min_bin'] + df_2['rsi_70_min_bin'] +
-        #                             df_2['rsi_105_min_bin'] + df_2['rsi_140_min_bin'] +
-        #                             df_2['rsi_175_min_bin'] + df_2['rsi_210_min_bin']) / 6
+        #indicators_df['rsi_median_min_2'] = (indicators_df['rsi_35_min_bin'] + indicators_df['rsi_70_min_bin']) / 2
+        #indicators_df['rsi_median_min_4'] = (indicators_df['rsi_35_min_bin'] + indicators_df['rsi_70_min_bin'] +
+        #                             indicators_df['rsi_105_min_bin'] + indicators_df['rsi_140_min_bin']) / 4
+        #indicators_df['rsi_median_min_6'] = (indicators_df['rsi_35_min_bin'] + indicators_df['rsi_70_min_bin'] +
+        #                             indicators_df['rsi_105_min_bin'] + indicators_df['rsi_140_min_bin'] +
+        #                             indicators_df['rsi_175_min_bin'] + indicators_df['rsi_210_min_bin']) / 6
 
         # Difference Median RSI and RSI
         #for i in [2, 4, 6]:
-        #    df_2[f'rsi_median_min_{i}_diff'] = df_2['rsi_bins'] - df_2[f'rsi_median_min_{i}']
+        #    indicators_df[f'rsi_median_min_{i}_diff'] = indicators_df['rsi_bins'] - indicators_df[f'rsi_median_min_{i}']
 
         # Rsi Signals
         #for i in [1, 2, 3]:
-        #    df_2[f'rsi_signal_start_35_{i}'] = np.where((df_2['rsi_bins'] == df_2[f'rsi_35_min_bin_shifted_{i}']), 1, 0)
-        #    df_2[f'rsi_signal_start_70_{i}'] = np.where((df_2['rsi_bins'] == df_2[f'rsi_70_min_bin_shifted_{i}']), 1, 0)
+        #    indicators_df[f'rsi_signal_start_35_{i}'] = np.where((indicators_df['rsi_bins'] == indicators_df[f'rsi_35_min_bin_shifted_{i}']), 1, 0)
+        #    indicators_df[f'rsi_signal_start_70_{i}'] = np.where((indicators_df['rsi_bins'] == indicators_df[f'rsi_70_min_bin_shifted_{i}']), 1, 0)
 
         # Sum of signals
-        #df_2['sum_rsi_signal_start'] = (df_2['rsi_signal_start_35_1'] + df_2['rsi_signal_start_35_2'] +
-        #                                df_2['rsi_signal_start_35_3'] + df_2['rsi_signal_start_70_1'] +
-        #                                df_2['rsi_signal_start_70_2'] + df_2['rsi_signal_start_70_3'] )
+        #indicators_df['sum_rsi_signal_start'] = (indicators_df['rsi_signal_start_35_1'] + indicators_df['rsi_signal_start_35_2'] +
+        #                                indicators_df['rsi_signal_start_35_3'] + indicators_df['rsi_signal_start_70_1'] +
+        #                                indicators_df['rsi_signal_start_70_2'] + indicators_df['rsi_signal_start_70_3'] )
 
         # MACD
-        macd = ta.trend.MACD(close=df_2['close_price'])
-        df_2['macd_line'] = macd.macd()
-        df_2['macd_hist'] = macd.macd_diff()
-        df_2['macd_signal_line'] = macd.macd_signal()
-        df_2['macd_hist_1d_shift'] = df_2['macd_hist'].shift(1)
-        df_2['macd_hist_2d_shift'] = df_2['macd_hist'].shift(2)
-        df_2['macd_hist_3d_shift'] = df_2['macd_hist'].shift(3)
+        macd = ta.trend.MACD(close=indicators_df['close'])
+        indicators_df['macd_line'] = macd.macd()
+        indicators_df['macd_hist'] = macd.macd_diff()
+        indicators_df['macd_signal_line'] = macd.macd_signal()
+        indicators_df['macd_hist_1d_shift'] = indicators_df['macd_hist'].shift(1)
+        indicators_df['macd_hist_2d_shift'] = indicators_df['macd_hist'].shift(2)
+        indicators_df['macd_hist_3d_shift'] = indicators_df['macd_hist'].shift(3)
 
         # Shift line
-        df_2['macd_line_shift_1d'] = df_2['macd_line'].shift(1)
-        df_2['macd_line_shift_2d'] = df_2['macd_line'].shift(2)
-        df_2['macd_line_shift_3d'] = df_2['macd_line'].shift(3)
-        df_2['macd_sig_line_shift_1d'] = df_2['macd_signal_line'].shift(1)
-        df_2['macd_sig_line_shift_2d'] = df_2['macd_signal_line'].shift(2)
-        df_2['macd_sig_line_shift_3d'] = df_2['macd_signal_line'].shift(3)
+        indicators_df['macd_line_shift_1d'] = indicators_df['macd_line'].shift(1)
+        indicators_df['macd_line_shift_2d'] = indicators_df['macd_line'].shift(2)
+        indicators_df['macd_line_shift_3d'] = indicators_df['macd_line'].shift(3)
+        indicators_df['macd_sig_line_shift_1d'] = indicators_df['macd_signal_line'].shift(1)
+        indicators_df['macd_sig_line_shift_2d'] = indicators_df['macd_signal_line'].shift(2)
+        indicators_df['macd_sig_line_shift_3d'] = indicators_df['macd_signal_line'].shift(3)
 
         # MACD - mins
-        df_2['macd_hist_2d_min'] = df_2['macd_hist'].rolling(2).min()
-        df_2['macd_hist_3d_min'] = df_2['macd_hist'].rolling(3).min()
-        df_2['macd_hist_5d_min'] = df_2['macd_hist'].rolling(5).min()
-        df_2['macd_hist_7d_min'] = df_2['macd_hist'].rolling(7).min()
-        df_2['macd_hist_35d_min'] = df_2['macd_hist'].rolling(35).min()
-        df_2['macd_hist_70d_min'] = df_2['macd_hist'].rolling(70).min()
-        df_2['macd_hist_140d_min'] = df_2['macd_hist'].rolling(140).min()
+        indicators_df['macd_hist_2d_min'] = indicators_df['macd_hist'].rolling(2).min()
+        indicators_df['macd_hist_3d_min'] = indicators_df['macd_hist'].rolling(3).min()
+        indicators_df['macd_hist_5d_min'] = indicators_df['macd_hist'].rolling(5).min()
+        indicators_df['macd_hist_7d_min'] = indicators_df['macd_hist'].rolling(7).min()
+        indicators_df['macd_hist_35d_min'] = indicators_df['macd_hist'].rolling(35).min()
+        indicators_df['macd_hist_70d_min'] = indicators_df['macd_hist'].rolling(70).min()
+        indicators_df['macd_hist_140d_min'] = indicators_df['macd_hist'].rolling(140).min()
 
         # MACD - min shifts
-        df_2['macd_hist_70d_min_shift_1'] = df_2['macd_hist_70d_min'].shift(70)
-        df_2['macd_hist_70d_min_shift_2'] = df_2['macd_hist_70d_min'].shift(140)
+        indicators_df['macd_hist_70d_min_shift_1'] = indicators_df['macd_hist_70d_min'].shift(70)
+        indicators_df['macd_hist_70d_min_shift_2'] = indicators_df['macd_hist_70d_min'].shift(140)
 
         # MACD - shift
-        df_2['macd_hist_3d_min_shift'] = df_2['macd_hist_3d_min'].shift(1)
-        df_2['macd_hist_5d_min_shift'] = df_2['macd_hist_5d_min'].shift(1)
-        df_2['macd_hist_7d_min_shift'] = df_2['macd_hist_7d_min'].shift(1)
+        indicators_df['macd_hist_3d_min_shift'] = indicators_df['macd_hist_3d_min'].shift(1)
+        indicators_df['macd_hist_5d_min_shift'] = indicators_df['macd_hist_5d_min'].shift(1)
+        indicators_df['macd_hist_7d_min_shift'] = indicators_df['macd_hist_7d_min'].shift(1)
 
         # MACD - min - shift
-        df_2['macd_hist_3d_min_diff'] = df_2['macd_hist_3d_min'] - df_2['macd_hist_3d_min_shift']
-        df_2['macd_hist_5d_min_diff'] = df_2['macd_hist_5d_min'] - df_2['macd_hist_5d_min_shift']
-        df_2['macd_hist_7d_min_diff'] = df_2['macd_hist_7d_min'] - df_2['macd_hist_7d_min_shift']
+        indicators_df['macd_hist_3d_min_diff'] = indicators_df['macd_hist_3d_min'] - indicators_df['macd_hist_3d_min_shift']
+        indicators_df['macd_hist_5d_min_diff'] = indicators_df['macd_hist_5d_min'] - indicators_df['macd_hist_5d_min_shift']
+        indicators_df['macd_hist_7d_min_diff'] = indicators_df['macd_hist_7d_min'] - indicators_df['macd_hist_7d_min_shift']
 
         # MACD - rolling std - avg
-        df_2['macd_hist_std_35'] = df_2['macd_hist'].rolling(35).std()
-        df_2['macd_hist_std_70'] = df_2['macd_hist'].rolling(70).std()
-        df_2['macd_hist_std_140'] = df_2['macd_hist'].rolling(140).std()
-        df_2['macd_hist_std_35_avg'] = df_2['macd_hist_std_35'].rolling(35).mean()
-        df_2['macd_hist_std_70_avg'] = df_2['macd_hist_std_70'].rolling(70).mean()
-        df_2['macd_hist_std_140_avg'] = df_2['macd_hist_std_140'].rolling(140).mean()
-        df_2['macd_hist_avg_35'] = df_2['macd_hist'].rolling(35).mean()
-        df_2['macd_hist_avg_35_min'] = df_2['macd_hist_avg_35'].rolling(35).min()
-        df_2['macd_hist_avg_70'] = df_2['macd_hist'].rolling(70).mean()
-        df_2['macd_hist_avg_70_min'] = df_2['macd_hist_avg_70'].rolling(70).min()
-        df_2['macd_hist_avg_140'] = df_2['macd_hist'].rolling(140).mean()
-        df_2['macd_hist_avg_140_min'] = df_2['macd_hist_avg_140'].rolling(140).min()
+        indicators_df['macd_hist_std_35'] = indicators_df['macd_hist'].rolling(35).std()
+        indicators_df['macd_hist_std_70'] = indicators_df['macd_hist'].rolling(70).std()
+        indicators_df['macd_hist_std_140'] = indicators_df['macd_hist'].rolling(140).std()
+        indicators_df['macd_hist_std_35_avg'] = indicators_df['macd_hist_std_35'].rolling(35).mean()
+        indicators_df['macd_hist_std_70_avg'] = indicators_df['macd_hist_std_70'].rolling(70).mean()
+        indicators_df['macd_hist_std_140_avg'] = indicators_df['macd_hist_std_140'].rolling(140).mean()
+        indicators_df['macd_hist_avg_35'] = indicators_df['macd_hist'].rolling(35).mean()
+        indicators_df['macd_hist_avg_35_min'] = indicators_df['macd_hist_avg_35'].rolling(35).min()
+        indicators_df['macd_hist_avg_70'] = indicators_df['macd_hist'].rolling(70).mean()
+        indicators_df['macd_hist_avg_70_min'] = indicators_df['macd_hist_avg_70'].rolling(70).min()
+        indicators_df['macd_hist_avg_140'] = indicators_df['macd_hist'].rolling(140).mean()
+        indicators_df['macd_hist_avg_140_min'] = indicators_df['macd_hist_avg_140'].rolling(140).min()
 
         # MACD - Growth
-        df_2['macd_hist_3d_min_coef'] = (-df_2['macd_hist'].shift(3) + df_2['macd_hist'].shift(1)) / 2
-        df_2['macd_hist_5d_min_coef'] = (-df_2['macd_hist'].shift(5) + df_2['macd_hist'].shift(1)) / 4
-        df_2['macd_hist_7d_min_coef'] = (-df_2['macd_hist'].shift(7) + df_2['macd_hist'].shift(1)) / 6
+        indicators_df['macd_hist_3d_min_coef'] = (-indicators_df['macd_hist'].shift(3) + indicators_df['macd_hist'].shift(1)) / 2
+        indicators_df['macd_hist_5d_min_coef'] = (-indicators_df['macd_hist'].shift(5) + indicators_df['macd_hist'].shift(1)) / 4
+        indicators_df['macd_hist_7d_min_coef'] = (-indicators_df['macd_hist'].shift(7) + indicators_df['macd_hist'].shift(1)) / 6
 
         # MACD - Growth - Line
-        df_2['macd_line_3d_min_coef'] = (-df_2['macd_line'].shift(3) + df_2['macd_line'].shift(1)) / 2
-        df_2['macd_line_5d_min_coef'] = (-df_2['macd_line'].shift(5) + df_2['macd_line'].shift(1)) / 4
-        df_2['macd_line_7d_min_coef'] = (-df_2['macd_line'].shift(7) + df_2['macd_line'].shift(1)) / 6
+        indicators_df['macd_line_3d_min_coef'] = (-indicators_df['macd_line'].shift(3) + indicators_df['macd_line'].shift(1)) / 2
+        indicators_df['macd_line_5d_min_coef'] = (-indicators_df['macd_line'].shift(5) + indicators_df['macd_line'].shift(1)) / 4
+        indicators_df['macd_line_7d_min_coef'] = (-indicators_df['macd_line'].shift(7) + indicators_df['macd_line'].shift(1)) / 6
 
         # MACD - Growth - shift
-        df_2['macd_hist_3d_min_coef_shift_1'] = df_2['macd_hist_3d_min_coef'].shift(1)
-        df_2['macd_hist_3d_min_coef_shift_2'] = df_2['macd_hist_3d_min_coef'].shift(2)
-        df_2['macd_hist_3d_min_coef_shift_3'] = df_2['macd_hist_3d_min_coef'].shift(3)
+        indicators_df['macd_hist_3d_min_coef_shift_1'] = indicators_df['macd_hist_3d_min_coef'].shift(1)
+        indicators_df['macd_hist_3d_min_coef_shift_2'] = indicators_df['macd_hist_3d_min_coef'].shift(2)
+        indicators_df['macd_hist_3d_min_coef_shift_3'] = indicators_df['macd_hist_3d_min_coef'].shift(3)
 
         # MACD - Growth - shift - Line
-        df_2['macd_line_3d_min_coef_shift_1'] = df_2['macd_line_3d_min_coef'].shift(1)
-        df_2['macd_line_3d_min_coef_shift_2'] = df_2['macd_line_3d_min_coef'].shift(2)
-        df_2['macd_line_3d_min_coef_shift_3'] = df_2['macd_line_3d_min_coef'].shift(3)
+        indicators_df['macd_line_3d_min_coef_shift_1'] = indicators_df['macd_line_3d_min_coef'].shift(1)
+        indicators_df['macd_line_3d_min_coef_shift_2'] = indicators_df['macd_line_3d_min_coef'].shift(2)
+        indicators_df['macd_line_3d_min_coef_shift_3'] = indicators_df['macd_line_3d_min_coef'].shift(3)
 
         # Initialize Bollinger Bands Indicator
-        indicator_bb = ta.volatility.BollingerBands(close=df_2["close_price"], n=14, ndev=2)
+        indicator_bb = ta.volatility.BollingerBands(close=indicators_df["close"], window=14, window_dev=2)
 
         # Add Bollinger Bands features
-        df_2['bb_bbm'] = indicator_bb.bollinger_mavg()
-        df_2['bb_bbh'] = indicator_bb.bollinger_hband()
-        df_2['bb_bbl'] = indicator_bb.bollinger_lband()
-        df_2['bb_std'] = (df_2['bb_bbh'] - df_2['bb_bbm']) / 2
-        #df_2['bb_std_avg_100'] = df_2['bb_std'].rolling(100).mean()
-        #df_2['bb_bbl_diff_std'] = (df_2['close_price'] - df_2['bb_bbl']) / df_2['bb_std']
-        #df_2['bb_bbh_diff_std'] = (df_2['close_price'] - df_2['bb_bbh']) / df_2['bb_std']
+        indicators_df['bb_bbm'] = indicator_bb.bollinger_mavg()
+        indicators_df['bb_bbh'] = indicator_bb.bollinger_hband()
+        indicators_df['bb_bbl'] = indicator_bb.bollinger_lband()
+        indicators_df['bb_std'] = (indicators_df['bb_bbh'] - indicators_df['bb_bbm']) / 2
+        #indicators_df['bb_std_avg_100'] = indicators_df['bb_std'].rolling(100).mean()
+        #indicators_df['bb_bbl_diff_std'] = (indicators_df['close'] - indicators_df['bb_bbl']) / indicators_df['bb_std']
+        #indicators_df['bb_bbh_diff_std'] = (indicators_df['close'] - indicators_df['bb_bbh']) / indicators_df['bb_std']
 
         # Add Bollinger Bands shift
         for i in [1, 2, 3]: #, 5, 10, 20, 30]:
-            df_2[f'bb_bbm_{i}'] = df_2['bb_bbm'].shift(i)
-            df_2[f'bb_bbh_{i}'] = df_2['bb_bbh'].shift(i)
-            df_2[f'bb_bbl_{i}'] = df_2['bb_bbl'].shift(i)
+            indicators_df[f'bb_bbm_{i}'] = indicators_df['bb_bbm'].shift(i)
+            indicators_df[f'bb_bbh_{i}'] = indicators_df['bb_bbh'].shift(i)
+            indicators_df[f'bb_bbl_{i}'] = indicators_df['bb_bbl'].shift(i)
 
         # SMA
-        #sma = ta.momentum.AwesomeOscillatorIndicator(high=df_2['high_price'], low=df_2['low_price'])
-        #df_2['sma_oscillator'] = sma.ao()
+        #sma = ta.momentum.AwesomeOscillatorIndicator(high=indicators_df['high'], low=indicators_df['low'])
+        #indicators_df['sma_oscillator'] = sma.ao()
 
         # ADX
-        #adx = ta.trend.ADXIndicator(high=df_2['high_price'], low=df_2['low_price'], close=df_2['close_price'])
-        #df_2['adx'] = adx.adx()
-        #df_2['adx_neg'] = adx.adx_neg()
-        #df_2['adx_pos'] = adx.adx_pos()
+        #adx = ta.trend.ADXIndicator(high=indicators_df['high'], low=indicators_df['low'], close=indicators_df['close'])
+        #indicators_df['adx'] = adx.adx()
+        #indicators_df['adx_neg'] = adx.adx_neg()
+        #indicators_df['adx_pos'] = adx.adx_pos()
 
         # Pivot Points
-        #df_2['previous_week_high'] = df_2['high_price'].rolling(5).max()
-        #df_2['previous_week_low'] = df_2['low_price'].rolling(5).min()
-        #df_2['previous_week_close'] = df_2['close_price'].rolling(5).mean()
-        #df_2['pivot_point'] = (df_2['previous_week_high'] + df_2['previous_week_low'] + df_2['previous_week_close']) / 3
-        #df_2['support_one'] = (df_2['pivot_point'] * 2) - df_2['previous_week_high']
-        #df_2['support_two'] = df_2['pivot_point'] - (df_2['previous_week_high'] - df_2['previous_week_low'])
-        #df_2['resistance_one'] = (df_2['pivot_point'] * 2) - df_2['previous_week_low']
-        #df_2['resistance_two'] = df_2['pivot_point'] + (df_2['previous_week_high'] - df_2['previous_week_low'])
+        #indicators_df['previous_week_high'] = indicators_df['high'].rolling(5).max()
+        #indicators_df['previous_week_low'] = indicators_df['low'].rolling(5).min()
+        #indicators_df['previous_week_close'] = indicators_df['close'].rolling(5).mean()
+        #indicators_df['pivot_point'] = (indicators_df['previous_week_high'] + indicators_df['previous_week_low'] + indicators_df['previous_week_close']) / 3
+        #indicators_df['support_one'] = (indicators_df['pivot_point'] * 2) - indicators_df['previous_week_high']
+        #indicators_df['support_two'] = indicators_df['pivot_point'] - (indicators_df['previous_week_high'] - indicators_df['previous_week_low'])
+        #indicators_df['resistance_one'] = (indicators_df['pivot_point'] * 2) - indicators_df['previous_week_low']
+        #indicators_df['resistance_two'] = indicators_df['pivot_point'] + (indicators_df['previous_week_high'] - indicators_df['previous_week_low'])
 
         # Benchmarks
         #for benchmark in benchmark_columns:
         #    for i in [10, 20, 30, 60, 90, 180]:
-        #        df_2[f'correlation_{benchmark}_{i}d'] = df_2['close_price'].rolling(i).corr(df_2[benchmark])
+        #        indicators_df[f'correlation_{benchmark}_{i}d'] = indicators_df['close'].rolling(i).corr(indicators_df[benchmark])
 
         # ROC
         #for i in [12, 24, 48, 90]:
-        #    df_2[f'roc_{i}'] = ta.momentum.ROCIndicator(close=df_2['close_price'], n=i).roc()
-        #    df_2[f'roc_{i}_shift'] = df_2[f'roc_{i}'].shift(1)
-        #    df_2[f'roc_{i}_shift_2d'] = df_2[f'roc_{i}'].shift(2)
-        #    df_2[f'roc_{i}_shift_3d'] = df_2[f'roc_{i}'].shift(3)
-        #    df_2[f'roc_{i}_shift_5d'] = df_2[f'roc_{i}'].shift(5)
+        #    indicators_df[f'roc_{i}'] = ta.momentum.ROCIndicator(close=indicators_df['close'], window=i).roc()
+        #    indicators_df[f'roc_{i}_shift'] = indicators_df[f'roc_{i}'].shift(1)
+        #    indicators_df[f'roc_{i}_shift_2d'] = indicators_df[f'roc_{i}'].shift(2)
+        #    indicators_df[f'roc_{i}_shift_3d'] = indicators_df[f'roc_{i}'].shift(3)
+        #    indicators_df[f'roc_{i}_shift_5d'] = indicators_df[f'roc_{i}'].shift(5)
 
         # Remove first 14 days
-        df_2 = df_2.reset_index(drop=True)
-        df_2 = df_2.reset_index()
-        df_2 = df_2[df_2['index'] > 14]
+        indicators_df = indicators_df.reset_index(drop=True)
 
         # Future Returns
-        future = df_2[['timestamp', 'close_price']]
-        future['timestamp'] = pd.to_datetime(future['timestamp'])
-        future.sort_values(by=['timestamp'], ascending=True, inplace = True)
+        future = indicators_df[['date', 'close']]
+        future['date'] = pd.to_datetime(future['date'])
+        future.sort_values(by=['date'], ascending=True, inplace = True)
 
         for i in [1, 3, 5, 7, 14, 21, 30, 60, 90, 120]:
-            future[f'next_{i}d_price'] = future['close_price'].shift(-i)
-            future[f'next_{i}d_return'] = (future[f'next_{i}d_price'] / future['close_price'])
+            future[f'next_{i}d_price'] = future['close'].shift(-i)
+            future[f'next_{i}d_return'] = (future[f'next_{i}d_price'] / future['close'])
+
+        # Drop close price
+        future = future.drop('close', axis=1)
 
         # Merge output with future returns
-        df_2['timestamp'] = pd.to_datetime(df_2['timestamp'])
-        df_2 = pd.merge(df_2, future, on='timestamp', how='left')
+        indicators_df['date'] = pd.to_datetime(indicators_df['date'])
+        indicators_df = pd.merge(indicators_df, future, on='date', how='left')
 
-        return results_list.append(df_2)
+        return indicators_df
 
-    else:
-
-        # If there's not enough data, it will output an empty dataframe
-        return results_list.append(empty_df)
-
-def run_indicators_list(stocks_list, results_list, stock_prices, benchmark_columns):
+def run_indicators_list(stocks_list, price_df, results_list):
     """
     Function to run indicators in parallel
     """
+    # Loop through symbols and append indicators to list
+    for symbol in stocks_list:
+        print(symbol)
+        symbol_indicators_df = run_indicators(price_df, symbol)
+        if symbol_indicators_df != None:
+            return results_list.append(symbol_indicators_df)
 
-    print('Running indicators ...')
-    total = len(stocks_list)
-
-    for idx, stock in enumerate(stocks_list):
-        run_indicators(stock_prices, results_list, stock, benchmark_columns)
-
-def indicators_parallel(all_prices, my_stocks_symbols, benchmark_columns):
+def indicators_parallel(stocks_list, price_df):
     """
     Main function to run indicators in parallel
     """
-
     # Create Pool with Processes and Manager
     pool = Pool(processes=cpu_count() - 1)
-    manager = Manager()
+
+    # Create Chunks of Stocks
+    no_of_elements = len(stocks_list) // 16
+    stock_chunks = chunks(stocks_list, no_of_elements)
 
     # Create list to store results
-    results_list = manager.list()
+    results_list = Manager().list()
 
     # Start running Pools
-    [pool.apply_async(run_indicators_list, args=(stocks_chunk, results_list, all_prices, benchmark_columns)) for stocks_chunk in my_stocks_symbols]
+    [pool.apply_async(run_indicators_list, args=(chunk, price_df, results_list)) for chunk in stock_chunks]
     pool.close()
     pool.join()
 
@@ -391,57 +375,17 @@ def indicators_parallel(all_prices, my_stocks_symbols, benchmark_columns):
 
     return indicators_df
 
-def main_indicators(all_prices, my_stocks_symbols, benchmark_columns, full_refresh=True, export=True):
+def main_indicators(prices_table, stocks_table, indicators_table):
 
-    # Check if file exists
-    existing_file = path.exists('../output/all_indicators.feather')
+    # Extract prices and symbols from tables
+    price_df = prices_table.read_table_to_pandas(drop_upload_date=True)
+    stocks_list = stocks_table.extract_column_to_list('symbol')[:32]
 
-    if full_refresh == False and existing_file == True:
+    # Calculate indicators
+    indicators_df = indicators_parallel(stocks_list, price_df)
 
-        print('Running Incremental Update of Indicators')
+    # Append data to table
+    indicators_table.load_data(data_to_load=indicators_df, id_columns=['symbol', 'date', 'upload_datetime'])
 
-        # Calculate Start date of Prices and incremental date update
-        start_date = dt.today() - timedelta(days=450)
-        incremental_date = dt.today() - timedelta(days=31)
-
-        # Open existing indicators
-        indicators_df = pd.read_feather('../output/all_indicators.feather')
-        indicators_df = indicators_df[pd.to_datetime(indicators_df['timestamp']) <= incremental_date]
-
-        # Keep only incremental prices
-        incremental_prices = all_prices[pd.to_datetime(all_prices['timestamp']) >= start_date]
-
-        # Run Indicators
-        incremental_indicators = indicators_parallel(incremental_prices, my_stocks_symbols, benchmark_columns)
-        incremental_indicators = incremental_indicators[pd.to_datetime(incremental_indicators['timestamp']) > incremental_date]
-
-        # Open existing Indicators
-        indicators_df = pd.concat([indicators_df, incremental_indicators])
-
-        return indicators_df
-
-    else:
-
-        if full_refresh == False and existing_file == False:
-            print('The file does not exist yet. Running a Full Refresh')
-        else:
-            print('Running Full Refresh of Indicators. This will take some time.')
-
-        # Run main indicators without any filters
-        indicators_df = indicators_parallel(all_prices, my_stocks_symbols, benchmark_columns)
-
-        # Check if we want to export all indicators (this is a timely task)
-        if export == True:
-            print('Exporting Indicators')
-
-            # Export indicators
-            indicators_df['just_date'] = indicators_df['just_date'].astype(str)
-            indicators_df.reset_index(drop=True).to_feather('../output/all_indicators.feather')
-
-        return indicators_df
-
-
-
-
-
-
+    # Remove duplicates
+    indicators_table.remove_duplicates(id_column='id', partition_by_columns='symbol, date', order_by_column='upload_datetime')

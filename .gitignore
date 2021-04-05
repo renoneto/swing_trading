@@ -68,3 +68,4 @@ tools/options/
 tools/indicators/__pycache__/benchmarks.cpython-37.pyc
 tools/keys/__pycache__/stocktwits_keys.cpython-37.pyc
 tools/keys/
+*.pyc
