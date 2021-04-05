@@ -43,8 +43,18 @@ def extract_earnings(stocks_path='../docs/my_stocks.csv', full_refresh=True):
             for element in json_response:
                 # Append results to list
                 results.append([element['ticker'], element['startdatetime'], element['epsestimate'], element['epsactual'], element['epssurprisepct']])
+
             # Print completion
-            print(str(round(((idx+1)/length), 2) * 100) + '%')
+            perc = round(((idx+1)/length), 2)
+
+            if idx == 0:
+                print(str(perc * 100) + '%')
+                prev_perc = perc
+
+            else:
+                if prev_perc != perc:
+                    print(str(perc * 100) + '%')
+
         except:
             continue
 

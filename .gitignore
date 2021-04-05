@@ -68,4 +68,31 @@ tools/options/
 tools/indicators/__pycache__/benchmarks.cpython-37.pyc
 tools/keys/__pycache__/stocktwits_keys.cpython-37.pyc
 tools/keys/
+<<<<<<< HEAD
 *.pyc
+=======
+docs/earnings.csv
+docs/fundamental_prices.csv
+tt.tst
+docs/earnings.csv
+docs/fundamental_prices.feather
+docs/my_stock_fundamentals_correct_dates.feather
+docs/earnings.csv
+notebooks/How To.ipynb
+notebooks/kent_is_too_excited.csv
+notebooks/reno.csv
+notebooks/reno1.csv
+notebooks/reno2.csv
+notebooks/reno3.csv
+notebooks/reno4.csv
+notebooks/reno5.csv
+notebooks/renono.csv
+notebooks/results.csv
+notebooks/Untitled.ipynb
+output/trades.feather
+tools/communicate/__pycache__/discord.cpython-37.pyc
+tools/extract/__pycache__/tipranks.cpython-37.pyc
+docs/prices.feather
+docs/my_stocks.feather
+docs/earnings.csv
+>>>>>>> b1abad5942c2507155d9817296e6ea8f33295abb
