@@ -70,4 +70,4 @@ urllib3==1.25.8
 wcwidth==0.1.8
 webencodings==0.5.1
 yahooquery==2.2.4
-zipp==3.0.0
+zipp==3.19.1
